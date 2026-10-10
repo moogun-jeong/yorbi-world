@@ -40,6 +40,15 @@ When Git integration is enabled, commits to `main` trigger Cloudflare Pages depl
 
 Cloudflare guide: https://developers.cloudflare.com/pages/configuration/git-integration/
 
+## Sprint A — Public website quality improvement (October 10, 2026)
+
+- `assets/yorbi-hero.webp` is a clearer 880×795 web-optimized crop from the approved YORBI brand board; the earlier 300px mascot file remains as an archived asset.
+- `assets/yorbi-social-card.webp` is the 1200×630 social sharing image, based on the same approved character design.
+- Open Graph, X summary_large_image and canonical URL point to the public Cloudflare Workers hostname.
+- Mobile navigation is accessible via a menu button (Escape key and outside click close it).
+- English / Korean language selection is saved in localStorage when available; static roadmap and other missing UI captions are translated.
+- Source verification is distinct from live mobile-browser and X social-crawler tests; confirm public behavior after auto deployment.
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.
