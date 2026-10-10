@@ -2,19 +2,21 @@
 
 Official early-stage character website for **YORBI**, an original fictional digital being born in the AI era.
 
-> **Genesis / Pre-token:** No YORBI token has been issued. There is no official contract address, presale, promised returns, confirmed exchange listing, live token scanner, or active AI agent.
+> **Genesis / Pre-token:** No YORBI token has been issued. There is no official YORBI token contract, presale, promised returns, confirmed exchange listing, full contract-security scanner, or active AI agent. The public read-only DEX pair lookup beta is available.
 
 ## Official channel
 - X: [@MeetYorbiAI](https://x.com/MeetYorbiAI)
 
 ## Current version
 
-This is a **free, bilingual (English/Korean), static website**. It contains the YORBI origin story, Discoveries/Explorer concepts, evolution roadmap, and the project transparency notice.
+This is a **free, bilingual (English/Korean), static website**. It contains the YORBI origin story, YORBI Daily editorial notes, a working read-only Explorer beta, the evolution roadmap, and the project transparency notice.
 
-- `index.html` — self-contained responsive website (HTML, CSS, and small language-switching JS).
+- `index.html` — responsive website (HTML, CSS, bilingual UI and simple interactivity).
+- `assets/explorer.mjs` — browser-side DEX Screener API request, exact address validation, non-trading market data display.
+- `tests/explorer.test.mjs` — zero-dependency Node.js unit tests for parsing and safety guards.
 - `assets/yorbi-character.webp` — web-optimized version of the **approved YORBI character artwork**, based on the original character board.
 - No build tools, server, database, paid APIs, wallet connection, or blockchain transactions.
-- The Explorer and AI conversation concepts are **not implemented**.
+- Explorer beta supports **DEX market data only**. Full on-chain contract security checks, honeypot detection, wallet analysis and AI conversations are **not implemented**.
 
 ### Preview locally
 
@@ -30,7 +32,7 @@ Then open http://localhost:8080.
 
 Production URL: https://yorbi-world.arhyme.workers.dev/ (Cloudflare **Workers** static assets). New changes in this repository must be deployed through the connected Cloudflare project. Verify deployed assets and HTML after every push.
 
-## Free hosting: Cloudflare Pages, connected to GitHub
+## Optional alternative hosting: Cloudflare Pages (current production is Workers)
 
 1. Log in to [Cloudflare dashboard](https://dash.cloudflare.com/).
 2. Go to **Workers & Pages** → **Create application** → **Pages** → **Connect to Git** (labels may differ). If you see a Workers-only repository wizard, use the **Continue to Pages** link.

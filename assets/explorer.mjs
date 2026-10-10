@@ -130,8 +130,14 @@ function initExplorer(){
    scan();
  });
  window.addEventListener("yorbi:languagechange",()=>{
-   if(last)render(last);
-   // Preserve the current request state without making an unrequested new API call.
+   if(last){
+     render(last);
+     setStatus(t("Data received. Displaying the highest-liquidity matching pair.","조회 완료. 일치하는 거래쌍 중 표시 유동성이 가장 큰 거래쌍을 보여줍니다."),"ok");
+   }else if(loading){
+     setStatus(t("Looking up public DEX pairs…","공개 DEX 거래쌍을 조회하고 있습니다…"),"loading");
+   }else if(status.dataset.kind==="info"){
+     setStatus(t("Ready for a token address.","토큰 주소를 입력하면 조회할 수 있습니다."),"info");
+   }
  });
 }
 if(typeof document!=="undefined"){
