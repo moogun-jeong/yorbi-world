@@ -98,6 +98,7 @@ function initExplorer(){
    const address=field.value.trim();
    out.hidden=true;
    last=null;
+   window.dispatchEvent(new CustomEvent("yorbi:scanstart"));
    if(!validAddress(chain,address)){
      setStatus(t("Enter a valid contract address for the selected chain. Token names and symbols are not accepted.","선택한 체인의 정확한 토큰 주소를 입력하세요. 이름이나 티커만으로는 조회하지 않습니다."),"error");
      return;
@@ -115,6 +116,7 @@ function initExplorer(){
      if(!found){setStatus(t("No matching DEX pair with this token as its base was reported. This does not mean the token does not exist.","요청한 토큰이 기준 토큰으로 표시된 DEX 거래쌍을 찾지 못했습니다. 토큰이 존재하지 않는다는 뜻은 아닙니다."),"info");return;}
      last={...found,chain,address,date:Date.now()};
      render(last);
+     window.dispatchEvent(new CustomEvent("yorbi:scanresult",{detail:{chain,address}}));
      setStatus(t("Data received. Displaying the highest-liquidity matching pair.","조회 완료. 일치하는 거래쌍 중 표시 유동성이 가장 큰 거래쌍을 보여줍니다."),"ok");
    }catch(err){
      let msg=t("DEX data could not be retrieved. Try again later or check the token on DEX Screener.","DEX 데이터를 가져오지 못했습니다. 잠시 후 재시도하거나 DEX Screener에서 직접 확인하세요.");

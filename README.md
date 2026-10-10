@@ -99,6 +99,29 @@ Then test the deployed page manually on desktop and mobile:
 7. Ensure main X links, Proof Center and responsive layouts remain functional.
 
 
+## Sprint 5 — Safety Scan (2026-10-11)
+
+YORBI Explorer v0.2 adds a **read-only, third-party risk signal** panel. One token lookup triggers DEX Screener first and, when a matching base-token DEX pair is found, a browser-side GoPlus token-security request. It does **not** require wallets, API keys, paid hosting, a database or background polling.
+
+- GoPlus EVM Token Security: Ethereum `1`, BNB Chain `56`, Base `8453`.
+- Solana GoPlus Token Security (separate format): Token mint/freeze/close permissions, account freezing, mutable balance and transfer-hook indicators.
+- EVM checks: GoPlus-reported honeypot, cannot-sell-all, mint, owner balance control, pausing, blacklisting, hidden owner, proxy, mutable fees, source verification and quoted buy/sell tax (GoPlus tax values are fractions: 0.1 = 10%).
+- Holder distribution: sum of **provider-listed** top holder percentages and provider-reported holder count. Holder wallets may include DEX pools, locker contracts, burns, custodians and centralized exchanges. **It is NOT a developer holdings metric**.
+- **LP lock and rug-pull status are NOT VERIFIED**; no automatic flag claims LP safety. A DEX pair's dollar liquidity also does not prove the LP is locked.
+- Result labels strictly mean **risk signal detected**, **not flagged in that check**, or **unknown/unavailable**. There is **no SAFE score**. A missing, failed or blocked API call must never convert to a safe result.
+- The GoPlus link opens the raw API response for manual comparison. GoPlus is a third-party source and can be wrong or incomplete. Browser CORS limitations, 429 rate limits, errors and timeouts are handled as **unknown**. The website makes no buy/sell, honeypot or AI investment claims.
+- **Privacy:** a clicked lookup requests information from DEX Screener and GoPlus; those external providers see the requested chain/contract and normal network metadata. We do not intentionally save search histories on our server.
+- **Current trigger:** security scan starts only after a valid token is found as a base token on a DEX pair. A token with no DEX pair does not get a security verdict in this version.
+
+### Tests (Node.js 20+)
+
+```bash
+node --test tests/explorer.test.mjs tests/security.test.mjs
+```
+
+Manual mobile acceptance: select Ethereum, use the PEPE example and verify GoPlus analysis is loaded separately; switch language and ensure the results are not cleared; try unknown and invalid contracts; verify that any failed security API call is marked unknown, never safe. Verify the GoPlus raw response and DEX Screener references. If GoPlus CORS is blocked in real browsers, treat Safety Scan as **limited/unavailable**, not implemented successfully from the user's perspective, until a safe zero-cost backend path is arranged.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.
