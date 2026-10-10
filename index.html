@@ -77,24 +77,167 @@ section[id]{scroll-margin-top:24px}
 @media(max-width:950px){.proof-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){h1{font-size:clamp(39px,10vw,54px);letter-spacing:-2.6px}.hero .lead{font-size:15px;line-height:1.75}.buttons .btn{min-height:44px}.proof-grid{gap:10px}.proof-card{padding:16px}.proof-card h3{font-size:14px}.proof-card p{font-size:12px}.proof-pill{font-size:9px}.section h2{letter-spacing:-1.4px}.footer{gap:16px}}
 @media(prefers-reduced-motion:reduce){.card,.step,.proof-card{transition:none}}
+
+/* YORBI Daily + Explorer: no framework, no wallet connections, no paid API */
+.section-heading,.explorer-title{display:flex;gap:20px;align-items:flex-start;justify-content:space-between}
+.daily-indicator,.scan-beta{flex-shrink:0;background:#f2efff;border:1px solid #ddd8f8;border-radius:20px;padding:10px 15px;color:#7164be;font-size:11px;font-weight:850;letter-spacing:1px;margin-top:22px}
+.scan-beta{background:#e8f7f4;color:#207969;border-color:#c9e7e0}
+.daily-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:34px}
+.daily-entry{min-width:0;background:#fff;border:1px solid var(--stroke);border-radius:22px;padding:27px;display:flex;flex-direction:column;gap:12px}
+.daily-date{color:#8276c5;font-size:11px;letter-spacing:1px;font-weight:850;display:flex;gap:9px;flex-wrap:wrap}
+.daily-date span{color:#8492aa}
+.daily-entry h3{font-size:21px;letter-spacing:-.35px;line-height:1.3;margin:7px 0 0}
+.daily-entry p{font-size:14px;line-height:1.8;color:var(--muted);margin:0}
+.daily-entry details{border-top:1px solid var(--stroke);padding-top:15px;margin-top:auto;font-size:14px}
+.daily-entry summary{cursor:pointer;font-weight:800;color:#6661b5}
+.daily-entry details p{margin:13px 0}
+.daily-entry details a{font-size:12px;color:#535bb1;text-decoration:underline;text-underline-offset:3px}
+.daily-footnote{color:#7d88a3;margin:20px 0 0;font-size:12px;line-height:1.7}
+.explorer-surface{margin-top:28px;border:1px solid #dbe4f4;border-radius:24px;background:#fff;padding:32px;box-shadow:0 22px 50px #667cb50d}
+.scan-controls{display:flex;gap:13px;align-items:end}
+.scan-controls label{display:block;color:#4f5c7a;font-weight:750;font-size:12px;margin-bottom:8px}
+.scan-chain-field{flex:0 0 175px}
+.scan-address-field{min-width:0;flex:1}
+.scan-controls input,.scan-controls select{height:48px;border:1px solid #d9e2f1;background:#fbfcff;color:#202a4e;border-radius:12px;padding:10px 14px;font-family:inherit;font-size:14px;width:100%;min-width:0}
+.scan-controls input:focus,.scan-controls select:focus{outline:2px solid #8b81d7;outline-offset:1px}
+.scan-button{height:48px;white-space:nowrap;border-radius:12px;background:#22294e;color:white;border:0;font-weight:800;padding:0 22px;cursor:pointer}
+.scan-button:hover{background:#555bc1}
+.scan-button:disabled{opacity:.5;cursor:wait}
+.scan-extras{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:12px}
+.scan-extras p{margin:0;font-size:12px;color:#72809b;line-height:1.6}
+.demo-button{border:0;background:none;color:#635fc7;cursor:pointer;font-size:12px;font-weight:750;padding:7px 0;text-decoration:underline;text-underline-offset:3px}
+#scan-status{margin:20px 0 0;font-size:13px;font-weight:700;border-radius:10px;padding:11px 14px;background:#f3f6fd;color:#5c6b90}
+#scan-status[data-kind=ok]{background:#e6f7f0;color:#1d7864}
+#scan-status[data-kind=error]{background:#fff0ed;color:#aa5339}
+#scan-status[data-kind=loading]{background:#eff2ff;color:#505ac0}
+#scan-results{margin-top:23px;border-top:1px solid var(--stroke);padding-top:26px}
+#scan-results[hidden],#scan-source[hidden]{display:none!important}
+.scan-result-top{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.scan-small-label{font-size:10px;letter-spacing:1px;font-weight:850;color:#7f81bc}
+.scan-result-top h3{font-size:23px;letter-spacing:-.5px;margin:7px 0}
+.scan-address{word-break:break-all;font-size:12px;font-family:ui-monospace,monospace;color:#7d89a2;margin:0}
+.pair-info{display:flex;flex-direction:column;gap:5px;align-items:flex-end;text-align:right;font-size:12px;color:#64758d}
+.scan-results-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:24px}
+.scan-results-grid>div{border:1px solid #e3e9f5;background:#fafbff;border-radius:13px;padding:16px;min-width:0}
+.scan-results-grid span{display:block;font-size:11px;color:#73809a;margin-bottom:8px;line-height:1.4}
+.scan-results-grid strong{display:block;font-size:19px;color:#253055;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.scan-insight{display:flex;gap:12px;align-items:center;border:1px solid #dae7f6;background:#eef6ff;border-radius:13px;padding:14px 17px;margin-top:14px}
+.scan-insight span{font-size:23px;color:#7271c6}
+.scan-insight p{margin:0;color:#506785;font-size:13px;line-height:1.6}
+.scan-bottom{display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap;font-size:12px;margin-top:19px;align-items:center;color:#7c86a0}
+.scan-bottom a,.scan-disclaimer a{color:#565bb8;text-decoration:underline;text-underline-offset:3px;font-weight:750}
+.scan-disclaimer{border-top:1px solid var(--stroke);margin-top:27px;padding-top:19px;font-size:12px;color:#72809b;line-height:1.7}
+.scan-disclaimer strong{font-size:12px;color:#4a5776}
+.scan-disclaimer p{margin:8px 0}
+@media(max-width:980px){.daily-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.scan-results-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){
+ .section-heading,.explorer-title{flex-direction:column;gap:2px}
+ .daily-indicator,.scan-beta{margin-top:5px}
+ .daily-grid{grid-template-columns:1fr}
+ .explorer-surface{padding:18px}
+ .scan-controls{flex-direction:column;align-items:stretch}
+ .scan-chain-field,.scan-address-field{flex:1}
+ .scan-button{width:100%}
+ .scan-result-top{flex-direction:column}
+ .pair-info{align-items:flex-start;text-align:left}
+ .scan-results-grid strong{font-size:16px}
+}
 </style>
 </head><body>
 <div class="topnote">✦ GENESIS CHAPTER &nbsp;·&nbsp; <b data-en="NO TOKEN HAS BEEN ISSUED" data-ko="아직 토큰이 발행되지 않았습니다">NO TOKEN HAS BEEN ISSUED</b> &nbsp;·&nbsp; ✦</div>
-<header class="wrap nav"><a class="logo" href="#top">✧ YORBI<span>.</span></a><nav class="links" id="primary-nav" aria-label="Main navigation" data-open="false"><a href="#story" data-en="Story" data-ko="스토리">Story</a><a href="#discover" data-en="Discover" data-ko="탐험">Discover</a><a href="#evolution" data-en="Evolution" data-ko="진화">Evolution</a><a href="#proof" data-en="Proof" data-ko="투명성">Proof</a><a class="mobile-social" href="https://x.com/MeetYorbiAI" target="_blank" rel="noopener noreferrer">𝕏 @MeetYorbiAI ↗</a></nav><div class="nav-actions"><button type="button" class="menu-toggle" id="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav"><span aria-hidden="true">☰</span></button><button type="button" class="lang" id="language" aria-label="Change language">한국어</button><a class="follow" href="https://x.com/MeetYorbiAI" target="_blank" rel="noopener noreferrer">𝕏 &nbsp;<span data-en="Follow" data-ko="팔로우">Follow</span></a></div></header>
+<header class="wrap nav"><a class="logo" href="#top">✧ YORBI<span>.</span></a><nav class="links" id="primary-nav" aria-label="Main navigation" data-open="false"><a href="#story" data-en="Story" data-ko="스토리">Story</a><a href="#discover" data-en="Discover" data-ko="탐험">Discover</a><a href="#daily" data-en="Daily" data-ko="데일리">Daily</a><a href="#explorer" data-en="Scan" data-ko="토큰 스캔">Scan</a><a href="#evolution" data-en="Evolution" data-ko="진화">Evolution</a><a href="#proof" data-en="Proof" data-ko="투명성">Proof</a><a class="mobile-social" href="https://x.com/MeetYorbiAI" target="_blank" rel="noopener noreferrer">𝕏 @MeetYorbiAI ↗</a></nav><div class="nav-actions"><button type="button" class="menu-toggle" id="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav"><span aria-hidden="true">☰</span></button><button type="button" class="lang" id="language" aria-label="Change language">한국어</button><a class="follow" href="https://x.com/MeetYorbiAI" target="_blank" rel="noopener noreferrer">𝕏 &nbsp;<span data-en="Follow" data-ko="팔로우">Follow</span></a></div></header>
 <main id="top">
 <section class="wrap hero"><div class="hero-copy"><div class="eyebrow">WELCOME TO GENESIS · AI-NATIVE BEING</div><h1><span data-en="A little being." data-ko="작은 생명체.">A little being.</span><br><span class="gradient" data-en="Infinite curiosity." data-ko="무한한 호기심.">Infinite curiosity.</span></h1><p class="lead" data-en="Hi, I'm YORBI. A tiny digital lifeform born in the age of AI. I explore, I learn, and I sometimes make mistakes. But I always try to leave proof." data-ko="안녕! 난 YORBI야. AI 시대에 태어난 작은 디지털 생명체지. 나는 탐험하고, 배우고, 때로는 실수해. 하지만 언제나 근거를 남기려고 노력해.">Hi, I'm YORBI. A tiny digital lifeform born in the age of AI. I explore, I learn, and I sometimes make mistakes. But I always try to leave proof.</p><div class="buttons"><a class="btn primary" href="#story" data-en="Meet YORBI ↗" data-ko="YORBI 만나기 ↗">Meet YORBI ↗</a><a class="btn secondary" href="#discover" data-en="Explore the journey →" data-ko="탐험 살펴보기 →">Explore the journey →</a></div><p class="smallnote">Born Curious. Built to Evolve. &nbsp;✦&nbsp; No investment promises.</p></div><div class="art"><div class="halo"></div><img class="character" src="assets/yorbi-hero.webp" width="880" height="795" loading="eager" decoding="async" fetchpriority="high" alt="YORBI — approved original translucent blue and lavender digital creature with glowing orbit"><span class="float">✦ LEVEL 01 — GENESIS</span></div></section>
 <div class="values"><span>CURIOUS BY DESIGN</span><b>✦</b><span>PLAYFUL BY NATURE</span><b>✦</b><span>PROOF BY DEFAULT</span><b>✦</b><span>BUILT TO EVOLVE</span></div>
 <section id="story" class="wrap section story"><div><div class="kicker">01 / ORIGIN STORY</div><h2 data-en="It began with one little question." data-ko="작은 질문 하나에서 시작했어요.">It began with one little question.</h2><p class="sub" data-en="In a universe full of answers, one tiny signal asked something different. YORBI wanted to understand not only what was happening, but how to know what was real." data-ko="답이 가득한 세상에서 작은 신호 하나가 다른 질문을 던졌어요. YORBI는 세상이 어떻게 움직이는지뿐 아니라, 무엇이 진짜인지도 궁금했죠.">In a universe full of answers, one tiny signal asked something different. YORBI wanted to understand not only what was happening, but how to know what was real.</p><p class="sub" data-en="YORBI is a fictional character, not a sentient AI. Every actual feature and milestone will be identified honestly." data-ko="YORBI는 의식을 가진 AI가 아닌 가상의 캐릭터입니다. 실제 구현된 기능과 개발 단계는 사실대로 공개합니다.">YORBI is a fictional character, not a sentient AI. Every actual feature and milestone will be identified honestly.</p></div><div class="quote"><span>“</span><blockquote><span data-en="Who am I?" data-ko="나는 누구지?">Who am I?</span><br><span data-en="And how do I know what's real?" data-ko="무엇이 진짜인지 어떻게 알 수 있을까?">And how do I know what's real?</span></blockquote><small>— YORBI · EPISODE 00</small></div></section>
-<section id="discover" class="soft"><div class="wrap section"><div class="kicker">02 / THE ADVENTURE</div><h2 data-en="Curiosity is our superpower." data-ko="호기심은 우리의 초능력이에요.">Curiosity is our superpower.</h2><p class="sub" data-en="Characters and discoveries today. Real tools tomorrow — only when they're truly ready." data-ko="지금은 캐릭터와 탐험 이야기부터. 실제 서비스는 완성한 뒤 공개하겠습니다.">Characters and discoveries today. Real tools tomorrow — only when they're truly ready.</p><div class="cards"><div class="card"><div class="symbol">✦</div><h3>YORBI DISCOVERIES</h3><p data-en="Stories and tiny discoveries about AI, technology and the blockchain universe." data-ko="AI, 기술, 블록체인 세상에서 만나는 흥미로운 이야기와 작은 발견들.">Stories and tiny discoveries about AI, technology and the blockchain universe.</p><span class="tag">GENESIS CONTENT</span></div><div class="card"><div class="symbol">◎</div><h3>YORBI EXPLORER</h3><p data-en="A future read-only tool to explain verifiable token and wallet information. Not available yet." data-ko="토큰과 지갑 정보를 출처와 함께 쉽게 설명할 읽기 전용 도구입니다. 현재 미구현입니다.">A future read-only tool to explain verifiable token and wallet information. Not available yet.</p><span class="tag">PLANNED · NOT LIVE</span></div><div class="card"><div class="symbol">✧</div><h3>YORBI TALKS</h3><p data-en="A future friendly AI experience if users genuinely need it and costs are sustainable. Not available yet." data-ko="이용자 수요와 운영 가능성이 확인되면 제공할 AI 대화 서비스입니다. 현재 미구현입니다.">A future friendly AI experience if users genuinely need it and costs are sustainable. Not available yet.</p><span class="tag">PLANNED · NOT LIVE</span></div></div></div></section>
-<section id="evolution" class="wrap section"><div class="kicker">03 / EVOLUTION</div><h2 data-en="Small steps. Real progress." data-ko="작지만 실제로 나아가는 단계.">Small steps. Real progress.</h2><p class="sub" data-en="YORBI evolves when actual features are built — never because of token prices or market hype." data-ko="YORBI는 토큰 가격이 아닌 실제 개발 기능과 성과에 따라 성장합니다.">YORBI evolves when actual features are built — never because of token prices or market hype.</p><div class="roadmap"><div class="step step-current"><span class="num">01 · NOW</span><span class="step-badge" data-en="SITE LIVE" data-ko="사이트 공개">SITE LIVE</span><h3>Genesis</h3><p>Character identity, community introduction and website.</p></div><div class="step"><span class="num">02 · PLANNED</span><span class="step-badge pending" data-en="NOT LIVE" data-ko="미구현">NOT LIVE</span><h3>Awakening</h3><p>Open development logs and first interactive experiences.</p></div><div class="step"><span class="num">03 · PLANNED</span><span class="step-badge pending" data-en="NOT LIVE" data-ko="미구현">NOT LIVE</span><h3>Explorer</h3><p>Source-backed on-chain explanations and read-only token scanning.</p></div><div class="step"><span class="num">04 · FUTURE</span><span class="step-badge pending" data-en="NOT LIVE" data-ko="미구현">NOT LIVE</span><h3>Evolution</h3><p>Community-driven ideas and useful capabilities.</p></div></div></section>
+<section id="discover" class="soft"><div class="wrap section"><div class="kicker">02 / THE ADVENTURE</div><h2 data-en="Curiosity is our superpower." data-ko="호기심은 우리의 초능력이에요.">Curiosity is our superpower.</h2><p class="sub" data-en="Characters and discoveries today. Real tools tomorrow — only when they're truly ready." data-ko="지금은 캐릭터와 탐험 이야기부터. 실제 서비스는 완성한 뒤 공개하겠습니다.">Characters and discoveries today. Real tools tomorrow — only when they're truly ready.</p><div class="cards"><div class="card"><div class="symbol">✦</div><h3>YORBI DISCOVERIES</h3><p data-en="Stories and tiny discoveries about AI, technology and the blockchain universe." data-ko="AI, 기술, 블록체인 세상에서 만나는 흥미로운 이야기와 작은 발견들.">Stories and tiny discoveries about AI, technology and the blockchain universe.</p><span class="tag">GENESIS CONTENT</span></div><div class="card"><div class="symbol">◎</div><h3>YORBI EXPLORER</h3><p data-en="Explore public token-pair prices and liquidity now. Contract security and wallet tracking are planned." data-ko="지금 실제 토큰 거래쌍의 가격과 유동성을 조회할 수 있습니다. 컨트랙트 보안과 지갑 추적은 향후 계획입니다.">Explore public token-pair prices and liquidity now. Contract security and wallet tracking are planned.</p><span class="tag" data-en="BETA · DEX DATA LIVE" data-ko="베타 · DEX 조회 가능">BETA · DEX DATA LIVE</span></div><div class="card"><div class="symbol">✧</div><h3>YORBI TALKS</h3><p data-en="A future friendly AI experience if users genuinely need it and costs are sustainable. Not available yet." data-ko="이용자 수요와 운영 가능성이 확인되면 제공할 AI 대화 서비스입니다. 현재 미구현입니다.">A future friendly AI experience if users genuinely need it and costs are sustainable. Not available yet.</p><span class="tag">PLANNED · NOT LIVE</span></div></div></div></section>
+
+<section id="daily" class="wrap section">
+<div class="kicker" data-en="03 / YORBI DAILY" data-ko="03 / YORBI 데일리">03 / YORBI DAILY</div>
+<div class="section-heading">
+ <div><h2 data-en="One discovery at a time." data-ko="작은 발견을 하나씩.">One discovery at a time.</h2>
+ <p class="sub" data-en="YORBI's first public field notes. Human-reviewed, source-linked stories — not an automated news feed or financial signals." data-ko="YORBI가 남기는 첫 탐험 기록입니다. 출처를 연결한 수동 검토 콘텐츠이며, 자동 뉴스 피드나 매매 신호가 아닙니다.">YORBI's first public field notes. Human-reviewed, source-linked stories — not an automated news feed or financial signals.</p></div>
+ <span class="daily-indicator" data-en="✦ GENESIS NOTES · 3 ENTRIES" data-ko="✦ 제네시스 탐험 기록 · 3건">✦ GENESIS NOTES · 3 ENTRIES</span>
+</div>
+<div class="daily-grid">
+ <article class="daily-entry">
+   <div class="daily-date"><time datetime="2026-10-11">11 OCT 2026</time> <span>BLOCKCHAIN BASICS</span></div>
+   <h3 data-en="A name isn't an identity." data-ko="코인 이름은 신분증이 아니에요.">A name isn't an identity.</h3>
+   <p data-en="Different tokens can use the same name or ticker. The chain and full contract address matter far more than a symbol." data-ko="서로 다른 토큰이 같은 이름이나 티커를 쓸 수 있습니다. 코인을 확인하려면 체인과 정확한 컨트랙트 주소가 더 중요합니다.">Different tokens can use the same name or ticker. The chain and full contract address matter far more than a symbol.</p>
+   <details><summary><span data-en="YORBI's field note" data-ko="YORBI의 탐험 메모">YORBI's field note</span></summary>
+     <p data-en="A token lookup should use the pair of chain ID and token address, not simply a ticker. Always verify the contract independently before interacting." data-ko="토큰을 조회할 때는 이름 대신 체인 ID와 토큰 주소를 함께 사용해야 합니다. 거래 전에는 반드시 컨트랙트를 별도로 확인하세요.">A token lookup should use the pair of chain ID and token address, not simply a ticker. Always verify the contract independently before interacting.</p>
+     <a href="https://docs.dexscreener.com/api/reference" target="_blank" rel="noopener noreferrer" data-en="Source: DEX Screener API reference ↗" data-ko="근거: DEX Screener 공식 API 문서 ↗">Source: DEX Screener API reference ↗</a>
+   </details>
+ </article>
+ <article class="daily-entry">
+   <div class="daily-date"><time datetime="2026-10-11">11 OCT 2026</time> <span>MARKET BASICS</span></div>
+   <h3 data-en="Liquidity isn't a promise." data-ko="유동성은 매도 보증서가 아니에요.">Liquidity isn't a promise.</h3>
+   <p data-en="A pool's quoted liquidity is useful context. It does not mean you can sell a large position at the last displayed price." data-ko="거래쌍의 표시 유동성은 유용한 정보입니다. 하지만 큰 물량을 화면에 보이는 가격 그대로 팔 수 있다는 뜻은 아닙니다.">A pool's quoted liquidity is useful context. It does not mean you can sell a large position at the last displayed price.</p>
+   <details><summary><span data-en="YORBI's field note" data-ko="YORBI의 탐험 메모">YORBI's field note</span></summary>
+     <p data-en="DEX data describes each pair, not guaranteed execution. Pool depth, trade size and fees can change your actual proceeds." data-ko="DEX 데이터는 거래쌍의 상태를 나타낼 뿐 체결 가격을 보장하지 않습니다. 풀 깊이와 주문 규모, 수수료에 따라 실제 수령액이 달라집니다.">DEX data describes each pair, not guaranteed execution. Pool depth, trade size and fees can change your actual proceeds.</p>
+     <a href="https://docs.dexscreener.com/api/reference" target="_blank" rel="noopener noreferrer" data-en="Source: DEX Screener liquidity fields ↗" data-ko="근거: DEX Screener 공식 유동성 필드 ↗">Source: DEX Screener liquidity fields ↗</a>
+   </details>
+ </article>
+ <article class="daily-entry">
+   <div class="daily-date"><time datetime="2026-10-10">10 OCT 2026</time> <span>BUILD LOG</span></div>
+   <h3 data-en="Genesis is on the record." data-ko="YORBI의 첫 발자국을 남겼어요.">Genesis is on the record.</h3>
+   <p data-en="YORBI's website and original character are public. The code history is visible — but no YORBI token or autonomous AI product has launched." data-ko="YORBI 홈페이지와 캐릭터가 공개됐습니다. 코드 변경 이력은 볼 수 있지만, YORBI 토큰이나 자율 AI 서비스는 아직 출시되지 않았습니다.">YORBI's website and original character are public. The code history is visible — but no YORBI token or autonomous AI product has launched.</p>
+   <details><summary><span data-en="YORBI's field note" data-ko="YORBI의 탐험 메모">YORBI's field note</span></summary>
+     <p data-en="We choose to log what has actually shipped, not hypothetical future milestones. Genesis is the first public chapter." data-ko="아직 이루어지지 않은 미래 목표보다 실제로 완료한 작업을 기록합니다. 제네시스는 공개된 첫 번째 이야기입니다.">We choose to log what has actually shipped, not hypothetical future milestones. Genesis is the first public chapter.</p>
+     <a href="https://github.com/moogun-jeong/yorbi-world/commits/main/" target="_blank" rel="noopener noreferrer" data-en="Source: Public GitHub history ↗" data-ko="근거: GitHub 공개 변경 이력 ↗">Source: Public GitHub history ↗</a>
+   </details>
+ </article>
+</div>
+<p class="daily-footnote" data-en="These are dated editorial notes, not a claim of daily automated publishing. New entries will be added when verified." data-ko="게시일이 표시된 수동 편집 기록입니다. 자동으로 매일 게시된다는 의미가 아니며, 확인된 내용을 순차적으로 추가합니다.">These are dated editorial notes, not a claim of daily automated publishing. New entries will be added when verified.</p>
+</section>
+
+<section id="explorer" class="soft"><div class="wrap section">
+  <div class="kicker" data-en="04 / YORBI EXPLORER" data-ko="04 / YORBI 익스플로러">04 / YORBI EXPLORER</div>
+  <div class="explorer-title"><div>
+  <h2 data-en="Follow the facts, not the hype." data-ko="유행보다 사실을 탐험해요.">Follow the facts, not the hype.</h2>
+  <p class="sub" data-en="A real, free token-pair lookup. Select a chain and enter the exact token address to check public DEX market data." data-ko="실제 공개 DEX 데이터를 조회하는 무료 기능입니다. 체인을 선택하고 정확한 토큰 주소를 입력해 거래 정보를 확인하세요.">A real, free token-pair lookup. Select a chain and enter the exact token address to check public DEX market data.</p></div><span class="scan-beta" data-en="● READ-ONLY BETA" data-ko="● 읽기 전용 베타">● READ-ONLY BETA</span></div>
+  <div class="explorer-surface">
+   <form id="token-form" autocomplete="off" novalidate>
+     <div class="scan-controls">
+       <div class="scan-chain-field"><label for="scan-chain" data-en="Chain" data-ko="체인">Chain</label><select id="scan-chain" name="chain"><option value="ethereum">Ethereum</option><option value="bsc">BNB Chain</option><option value="base">Base</option><option value="solana">Solana</option></select></div>
+       <div class="scan-address-field"><label for="scan-address" data-en="Token contract address" data-ko="토큰 컨트랙트 주소">Token contract address</label><input id="scan-address" name="address" inputmode="text" spellcheck="false" autocapitalize="off" maxlength="90" placeholder="0x… / Solana token address" aria-describedby="scan-hint" required></div>
+       <button id="scan-submit" class="scan-button" type="submit"><span data-en="Explore →" data-ko="조회하기 →">Explore →</span></button>
+     </div>
+   </form>
+   <div class="scan-extras"><p id="scan-hint" data-en="No wallet connection. Nothing is bought or sold. Only published DEX data is requested." data-ko="지갑 연결·매수·매도 없이 공개 DEX 데이터만 조회합니다.">No wallet connection. Nothing is bought or sold. Only published DEX data is requested.</p><button type="button" id="scan-demo" class="demo-button" data-en="Try example: PEPE (Ethereum) ↗" data-ko="예시 조회: PEPE (Ethereum) ↗">Try example: PEPE (Ethereum) ↗</button></div>
+   <p id="scan-status" role="status" aria-live="polite" data-kind="info" data-en="Ready for a token address." data-ko="토큰 주소를 입력하면 조회할 수 있습니다.">Ready for a token address.</p>
+   <div id="scan-results" hidden>
+     <div class="scan-result-top"><div><span class="scan-small-label" data-en="TOKEN FOUND ON A PUBLIC DEX" data-ko="공개 DEX 거래쌍에서 확인한 토큰">TOKEN FOUND ON A PUBLIC DEX</span><h3 id="scan-token"></h3><p class="scan-address" id="scan-contract"></p></div><div class="pair-info"><span id="scan-selected-chain"></span><span id="scan-pair"></span></div></div>
+     <div class="scan-results-grid">
+       <div><span data-en="Price (USD)" data-ko="가격 (USD)">Price (USD)</span><strong id="scan-price">—</strong></div>
+       <div><span data-en="Pair liquidity" data-ko="거래쌍 유동성">Pair liquidity</span><strong id="scan-liquidity">—</strong></div>
+       <div><span data-en="24h volume" data-ko="24시간 거래량">24h volume</span><strong id="scan-volume">—</strong></div>
+       <div><span data-en="24h price change" data-ko="24시간 가격 변화">24h price change</span><strong id="scan-change">—</strong></div>
+       <div><span data-en="Market cap" data-ko="시가총액">Market cap</span><strong id="scan-mcap">—</strong></div>
+       <div><span data-en="FDV" data-ko="완전희석가치 (FDV)">FDV</span><strong id="scan-fdv">—</strong></div>
+       <div><span data-en="24h buys / sells" data-ko="24시간 매수 / 매도 건수">24h buys / sells</span><strong id="scan-trades">—</strong></div>
+       <div><span data-en="Matching pools" data-ko="일치하는 거래쌍 수">Matching pools</span><strong id="scan-count">—</strong></div>
+     </div>
+     <div class="scan-insight"><span aria-hidden="true">✧</span><p id="scan-interpretation"></p></div>
+     <div class="scan-bottom"><span class="scan-timestamp"><span data-en="Requested at" data-ko="조회 시각">Requested at</span>: <time id="scan-checked"></time></span><a id="scan-source" target="_blank" rel="noopener noreferrer" href="https://dexscreener.com/" hidden data-en="Verify on DEX Screener ↗" data-ko="DEX Screener에서 검증 ↗">Verify on DEX Screener ↗</a></div>
+   </div>
+   <div class="scan-disclaimer">
+     <strong data-en="What this does NOT check" data-ko="아직 검사하지 않는 항목">What this does NOT check</strong>
+     <p data-en="This is a DEX pair-data viewer, NOT a contract audit, honeypot detector, wallet tracing service, AI analysis, or investment recommendation. A missing value (—) means not reported, not zero. Figures may be delayed or unavailable, and the most liquid pair is not the whole market." data-ko="이 기능은 DEX 거래쌍 정보 조회 도구이며 컨트랙트 감사, 허니팟 검사, 지갑 추적, AI 분석, 투자 추천 기능이 아닙니다. 값 없음(—)은 0이 아니라 제공되지 않은 정보입니다. 데이터가 지연되거나 누락될 수 있으며 표시된 거래쌍은 전체 시장이 아닙니다.">This is a DEX pair-data viewer, NOT a contract audit, honeypot detector, wallet tracing service, AI analysis, or investment recommendation. A missing value (—) means not reported, not zero. Figures may be delayed or unavailable, and the most liquid pair is not the whole market.</p>
+     <a href="https://docs.dexscreener.com/api/reference" target="_blank" rel="noopener noreferrer" data-en="Data source: DEX Screener public API ↗" data-ko="데이터 출처: DEX Screener 공개 API ↗">Data source: DEX Screener public API ↗</a>
+   </div>
+  </div>
+</div></section>
+
+<section id="evolution" class="wrap section"><div class="kicker" data-en="05 / EVOLUTION" data-ko="05 / 진화">05 / EVOLUTION</div><h2 data-en="Small steps. Real progress." data-ko="작지만 실제로 나아가는 단계.">Small steps. Real progress.</h2><p class="sub" data-en="YORBI evolves when actual features are built — never because of token prices or market hype." data-ko="YORBI는 토큰 가격이 아닌 실제 개발 기능과 성과에 따라 성장합니다.">YORBI evolves when actual features are built — never because of token prices or market hype.</p><div class="roadmap"><div class="step step-current"><span class="num">01 · NOW</span><span class="step-badge" data-en="SITE LIVE" data-ko="사이트 공개">SITE LIVE</span><h3>Genesis</h3><p>Character identity, community introduction and website.</p></div><div class="step"><span class="num">02 · NOW</span><span class="step-badge" data-en="DAILY NOTES LIVE" data-ko="데일리 기록 공개">DAILY NOTES LIVE</span><h3>Awakening</h3><p>First verified field notes and public build history are available.</p></div><div class="step"><span class="num">03 · BETA</span><span class="step-badge" data-en="DEX LOOKUP LIVE" data-ko="DEX 조회 공개">DEX LOOKUP LIVE</span><h3>Explorer</h3><p>Basic DEX pair lookup is live. Contract risk checks and wallet tracing are planned.</p></div><div class="step"><span class="num">04 · FUTURE</span><span class="step-badge pending" data-en="NOT LIVE" data-ko="미구현">NOT LIVE</span><h3>Evolution</h3><p>Community-driven ideas and useful capabilities.</p></div></div></section>
 <section id="proof" class="soft"><div class="wrap section">
-<div class="kicker">04 / PROOF CENTER</div>
+<div class="kicker" data-en="06 / PROOF CENTER" data-ko="06 / 투명성 센터">06 / PROOF CENTER</div>
 <h2 data-en="Playful outside. Transparent inside." data-ko="재미는 가볍게. 운영은 투명하게.">Playful outside. Transparent inside.</h2>
 <p class="sub" data-en="This is a public character and product experiment. We separate what is live, what is planned, and what does not exist yet." data-ko="이곳은 공개 캐릭터·제품 실험 프로젝트입니다. 현재 운영 중인 기능, 계획 중인 기능, 아직 존재하지 않는 것을 명확히 구분합니다.">This is a public character and product experiment. We separate what is live, what is planned, and what does not exist yet.</p>
 <div class="proof-grid" aria-label="Current project status">
   <div class="proof-card"><span class="proof-pill proof-live" data-en="● LIVE" data-ko="● 운영 중">● LIVE</span><h3 data-en="Official website" data-ko="공식 홈페이지">Official website</h3><p data-en="The Genesis landing page is publicly available." data-ko="Genesis 소개 홈페이지가 공개되어 있습니다.">The Genesis landing page is publicly available.</p></div>
   <div class="proof-card"><span class="proof-pill proof-none" data-en="● NOT ISSUED" data-ko="● 미발행">● NOT ISSUED</span><h3 data-en="YORBI token" data-ko="YORBI 토큰">YORBI token</h3><p data-en="No token, contract address, presale or airdrop exists." data-ko="토큰·공식 컨트랙트 주소·사전판매·에어드롭이 없습니다.">No token, contract address, presale or airdrop exists.</p></div>
-  <div class="proof-card"><span class="proof-pill proof-planned" data-en="● PLANNED" data-ko="● 계획 중">● PLANNED</span><h3>YORBI Explorer</h3><p data-en="Read-only token analysis is not available yet." data-ko="읽기 전용 토큰 분석은 아직 제공하지 않습니다.">Read-only token analysis is not available yet.</p></div>
+  <div class="proof-card"><span class="proof-pill proof-live" data-en="● BETA LIVE" data-ko="● 베타 운영 중">● BETA LIVE</span><h3>YORBI Explorer</h3><p data-en="DEX pair lookup is live. Contract audits, safety verdicts and wallet tracing are not available." data-ko="DEX 거래쌍 조회는 가능합니다. 컨트랙트 감사, 안전 판정, 지갑 추적은 아직 지원하지 않습니다.">DEX pair lookup is live. Contract audits, safety verdicts and wallet tracing are not available.</p></div>
   <div class="proof-card"><span class="proof-pill proof-planned" data-en="● PLANNED" data-ko="● 계획 중">● PLANNED</span><h3>YORBI Talks</h3><p data-en="No live AI chat or agent is running." data-ko="현재 운영 중인 AI 챗봇이나 에이전트는 없습니다.">No live AI chat or agent is running.</p></div>
 </div>
 <div class="disclosure">
@@ -106,7 +249,7 @@ section[id]{scroll-margin-top:24px}
 <a href="https://x.com/MeetYorbiAI" target="_blank" rel="noopener noreferrer" class="social">𝕏 &nbsp; Follow the Genesis story ↗</a>
 </div></section>
 </main>
-<footer class="wrap footer"><div class="footer-brand">✧ YORBI — Born Curious. Built to Evolve.</div><div class="footer-meta"><span data-en="Independent character experiment · No token issued." data-ko="독립적인 캐릭터 실험 프로젝트 · 토큰 미발행">Independent character experiment · No token issued.</span><span class="footer-date"><span data-en="Last updated" data-ko="최종 업데이트">Last updated</span>: <time datetime="2026-10-10">2026-10-10</time></span></div><div class="footer-links"><a href="https://x.com/MeetYorbiAI" target="_blank" rel="noopener noreferrer">𝕏 @MeetYorbiAI ↗</a><a href="https://github.com/moogun-jeong/yorbi-world" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></footer>
+<footer class="wrap footer"><div class="footer-brand">✧ YORBI — Born Curious. Built to Evolve.</div><div class="footer-meta"><span data-en="Independent character experiment · No token issued." data-ko="독립적인 캐릭터 실험 프로젝트 · 토큰 미발행">Independent character experiment · No token issued.</span><span class="footer-date"><span data-en="Last updated" data-ko="최종 업데이트">Last updated</span>: <time datetime="2026-10-11">2026-10-11</time></span></div><div class="footer-links"><a href="https://x.com/MeetYorbiAI" target="_blank" rel="noopener noreferrer">𝕏 @MeetYorbiAI ↗</a><a href="https://github.com/moogun-jeong/yorbi-world" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></footer>
 
 <script>
 (function(){
@@ -128,18 +271,15 @@ section[id]{scroll-margin-top:24px}
     [".quote small","— YORBI · EPISODE 00","— YORBI · 에피소드 00"],
     ["#discover .kicker","02 / THE ADVENTURE","02 / 탐험의 시작"],
     ["#discover .card:nth-child(1) .tag","GENESIS CONTENT","제네시스 콘텐츠"],
-    ["#discover .card:nth-child(2) .tag","PLANNED · NOT LIVE","계획 중 · 미구현"],
-    ["#discover .card:nth-child(3) .tag","PLANNED · NOT LIVE","계획 중 · 미구현"],
-    ["#evolution .kicker","03 / EVOLUTION","03 / 진화"],
+        ["#discover .card:nth-child(3) .tag","PLANNED · NOT LIVE","계획 중 · 미구현"],
     ["#evolution .step:nth-child(1) .num","01 · NOW","01 · 현재"],
-    ["#evolution .step:nth-child(2) .num","02 · PLANNED","02 · 계획 중"],
-    ["#evolution .step:nth-child(3) .num","03 · PLANNED","03 · 계획 중"],
+    ["#evolution .step:nth-child(2) .num","02 · NOW","02 · 현재"],
+    ["#evolution .step:nth-child(3) .num","03 · BETA","03 · 베타"],
     ["#evolution .step:nth-child(4) .num","04 · FUTURE","04 · 향후"],
     ["#evolution .step:nth-child(1) p","Character identity, community introduction and website.","캐릭터 정체성, 커뮤니티 소개, 공식 홈페이지."],
-    ["#evolution .step:nth-child(2) p","Open development logs and first interactive experiences.","공개 개발 기록과 첫 번째 상호작용 기능."],
-    ["#evolution .step:nth-child(3) p","Source-backed on-chain explanations and read-only token scanning.","출처가 있는 온체인 설명과 읽기 전용 토큰 스캔."],
+    ["#evolution .step:nth-child(2) p","First verified field notes and public build history are available.","검증한 첫 탐험 기록과 공개 개발 이력을 확인할 수 있습니다."],
+    ["#evolution .step:nth-child(3) p","Basic DEX pair lookup is live. Contract risk checks and wallet tracing are planned.","기본 DEX 거래쌍 조회는 이용할 수 있으며 컨트랙트 보안검사와 지갑 추적은 개발 예정입니다."],
     ["#evolution .step:nth-child(4) p","Community-driven ideas and useful capabilities.","커뮤니티 제안과 실제로 유용한 기능 확장."],
-    ["#proof .kicker","04 / PROOF CENTER","04 / 투명성 센터"],
     ["#proof .social","𝕏 Follow the Genesis story ↗","𝕏 제네시스 이야기 팔로우 ↗"]
   ];
   for(const [selector,en,ko] of localized){
@@ -159,6 +299,7 @@ section[id]{scroll-margin-top:24px}
     langButton.textContent=labels[target];
     langButton.setAttribute("aria-label",target==="en"?"한국어로 변경":"Switch to English");
     if(save){try{window.localStorage.setItem(KEY,target);}catch(_){}}
+    window.dispatchEvent(new CustomEvent("yorbi:languagechange",{detail:{lang:target}}));
   }
   setLanguage(readLanguage(),false);
   langButton.addEventListener("click",()=>{
@@ -177,4 +318,5 @@ section[id]{scroll-margin-top:24px}
   window.addEventListener("resize",()=>{if(window.innerWidth>900)setMenu(false);});
 })();
 </script>
+<script type="module" src="assets/explorer.mjs"></script>
 </body></html>
