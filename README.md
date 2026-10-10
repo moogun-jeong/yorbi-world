@@ -26,6 +26,10 @@ python3 -m http.server 8080
 
 Then open http://localhost:8080.
 
+## Current live deployment
+
+Production URL: https://yorbi-world.arhyme.workers.dev/ (Cloudflare **Workers** static assets). New changes in this repository must be deployed through the connected Cloudflare project. Verify deployed assets and HTML after every push.
+
 ## Free hosting: Cloudflare Pages, connected to GitHub
 
 1. Log in to [Cloudflare dashboard](https://dash.cloudflare.com/).
