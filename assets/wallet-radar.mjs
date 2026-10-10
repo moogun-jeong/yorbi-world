@@ -272,11 +272,14 @@ function initTracker(){
     // Inform the optional evidence review only after the user explicitly ran Wallet Radar.
     const candidates=[...records,creatorRecord].filter(Boolean);
     const sources=[];
-    for(const rec of candidates){
-      if(rec.error||!rec.summary)continue;
-      for(const ev of rec.summary.recent.slice(0,2)){
-        if(ev.amount===null||ev.amount<=0)continue;
-        sources.push({wallet:rec.address,hash:ev.hash});
+    // Round-robin sampling: one recent event per wallet first, before filling extras.
+    // Prevent a very active wallet from monopolizing the 6 evidence slots.
+    for(let turn=0;turn<2;turn++){
+      for(const rec of candidates){
+        if(rec.error||!rec.summary)continue;
+        const eligible=rec.summary.recent.filter(ev=>ev.amount!==null&&ev.amount>0);
+        const ev=eligible[turn];
+        if(ev)sources.push({wallet:rec.address,hash:ev.hash});
       }
     }
     window.dispatchEvent(new CustomEvent("yorbi:walletsample",{detail:{

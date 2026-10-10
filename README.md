@@ -186,6 +186,24 @@ node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.t
 Manual verification: scan PEPE Ethereum, inspect a holder's raw transaction. An ordinary `transfer` call must be labeled a transfer, never a buy or sell. For real swaps, require explicit swap call plus both token and quote payment from the watched wallet. Confirm the same chain/contract/tx reference before accepting a result. Test no creator, no pending transaction, API timeout, language switch and unsupported chains. Do not advertise end-to-end iPhone success until tested by the user.
 
 
+## Sprint 6.2 — Swap-event context and clear evidence labels (2026-10-11)
+
+**Scope:** Keeps the free, browser-only Ethereum/Base wallet analysis. No GitHub Actions, wallet signatures, paid APIs, backend, or persistent transaction history.
+
+- Decodes canonical Uniswap V2 and V3 `Swap` **event topics** from the Blockscout transaction log endpoint for selected transactions. A matching event topic and opposite-direction ERC-20 movements involving the watched address are classified as **DEX-style swap context** and explicitly **NOT proof of that wallet's executed trade**. Logs can be emitted by untrusted contracts or may coexist with unrelated batch transfers.
+- Stronger evidence remains **successful explicit swap method AND opposing tracked/quote ERC-20 movements involving the watched wallet**. Never infer buy/sell from standalone `transfer()` or general token movements.
+- For large transaction batches, fetch up to **two pages** of token-transfer and relevant event logs when necessary. If pagination still remains, the record stays **unclassified** (`incomplete_logs`); never label a partial record as a definitive swap.
+- Change raw internal classification codes (e.g. `no_explicit_swap_method`, `incomplete_logs`) into human-readable **Korean/English reasons**.
+- Round-robin pick of up to two nonzero records per sampled wallet, preventing a single high-activity whale from dominating the six optional detailed transaction slots. Display `n / total` while sequentially checking transaction details.
+- Maintain links to the original Blockscout transactions, creator funding distinctions, absence of full history, and careful unknown/no-evidence labels.
+- This is **not an OVO-style complete forensic engine**. It does not resolve arbitrary router inner calls, Uniswap V4, native-ETH settlement within contracts, internal transfers, 7702/4337 bundles, team-controlled addresses, realized trading PnL, or multi-hop funding. A DEX-like event can be spoofed; treat it as context, not confirmation.
+- Public API limits and delays can affect results. Browser fetches happen only on explicit button clicks; one optional deep review may use additional API calls but cannot incur GitHub Actions minutes.
+
+**Tests:** `node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs`
+
+Mobile verification: after PEPE Explorer/Safety Scan/Wallet Radar, click the separate evidence-review button. Ordinary token `transfer()` should read "토큰 전송: 매매 미확인", unclassified transactions must show Korean reasons rather than raw internal codes, and events without sufficient proof remain labeled as context or unknown. Try an over-100-log batch, Ethereum/Base and unsupported chains. Verify links and language toggle; do not call a transaction verified solely on the presence of a `Swap` event.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

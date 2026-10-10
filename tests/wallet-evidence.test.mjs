@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {evidenceUrl,nativeUrl,txExplorer,dedupeEvidenceSources,classifySwapEvidence,directNativeFunding}
+import {evidenceUrl,nativeUrl,txExplorer,dedupeEvidenceSources,classifySwapEvidence,directNativeFunding,SWAP_TOPICS,swapEventEvidence,explainEvidenceReason,nextEvidencePageUrl}
  from "../assets/wallet-evidence.mjs";
 const token="0x6982508145454ce325ddbe47a25d4ec3d2311933";
 const quote="0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -95,4 +95,70 @@ test("real PEPE sample: ordinary ERC-20 transfer does not count as a buy",()=>{
  const moves=[move(token,"0x841ed663F2636863D40be4EE76243377dff13a34",who,"500000000000000000000000000000")];
  const evaluation=classifySwapEvidence(actual,moves,who,token);
  assert.equal(evaluation.kind,"transfer");
+});
+
+
+test("official V2/V3 swap event topic signatures recognized as contextual evidence",()=>{
+ const pool="0x1111111111111111111111111111111111111111";
+ const ev=[{address:{hash:pool},topics:[SWAP_TOPICS.v2]},{address:{hash:pool},topics:[SWAP_TOPICS.v3]}];
+ const signal=swapEventEvidence(ev);
+ assert.equal(signal.present,true);
+ assert.equal(signal.pools.length,1);
+ assert.equal(SWAP_TOPICS.v2,"0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822");
+ assert.equal(SWAP_TOPICS.v3,"0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67");
+});
+test("V2/V3 event and opposing ERC-20 flows provide context, never confirmed wallet trade",()=>{
+ const pool="0x1111111111111111111111111111111111111111";
+ const signal=swapEventEvidence([{topics:[SWAP_TOPICS.v3],address:{hash:pool}}]);
+ const tx=receipt("execute");
+ const flows=[move(token,router,trader,qty(200)),move(quote,trader,router,qty(100,6),"6","USDC")];
+ const verdict=classifySwapEvidence(tx,flows,trader,token,{swapEvent:signal});
+ assert.equal(verdict.kind,"swap_context_evidence");
+ assert.equal(verdict.direction,"receive");
+ assert.equal(verdict.reason,"swap_event_and_opposing_erc20_flows");
+ assert.deepEqual(verdict.pools,[pool]);
+});
+test("swap event without counterflow or complete event pagination is not evidence of wallet market trade",()=>{
+ const pool="0x1111111111111111111111111111111111111111";
+ const ev={topics:[SWAP_TOPICS.v2],address:{hash:pool}};
+ const signal=swapEventEvidence([ev]);
+ const incomplete=swapEventEvidence([ev],{complete:false});
+ assert.equal(incomplete.present,false);
+ const noPay=classifySwapEvidence(receipt("execute"),[move(token,router,trader,qty(200))],trader,token,{swapEvent:signal});
+ assert.equal(noPay.kind,"unverified");
+ const pay=[move(token,router,trader,qty(200)),move(quote,trader,router,qty(100,6),"6","USDC")];
+ assert.equal(classifySwapEvidence(receipt("transfer"),pay,trader,token,{swapEvent:incomplete}).kind,"transfer");
+});
+test("unknown event topics and unverified pool addresses never fabricate DEX context",()=>{
+ const fake=[{topics:["0x"+"a".repeat(64)],address:{hash:router}},
+ {topics:[SWAP_TOPICS.v2],address:{hash:"malformed"}}];
+ const signal=swapEventEvidence(fake);
+ assert.equal(signal.present,false);
+});
+test("explicit swap method still requires opposite payment and retains higher certainty",()=>{
+ const flow=[move(token,router,trader,qty(200)),move(quote,trader,router,qty(100,6),"6","USDC")];
+ const verdict=classifySwapEvidence(receipt("swapExactTokensForTokens"),flow,trader,token);
+ assert.equal(verdict.kind,"swap_buy_evidence");
+ assert.equal(verdict.reason,"swap_method_and_opposing_erc20_flows");
+});
+test("classification reasons are explained in Korean without raw code names",()=>{
+ assert.match(explainEvidenceReason("no_explicit_swap_method","ko"),/스왑/);
+ assert.match(explainEvidenceReason("incomplete_logs","ko"),/로그/);
+ assert.match(explainEvidenceReason("swap_event_and_opposing_erc20_flows","ko"),/미확정/);
+ assert.equal(explainEvidenceReason("invalid-data","ko"),"기타 판정 불가 사유");
+});
+test("next-page URL preserves allowlisted Blockscout origin and restricts query keys",()=>{
+ const original=evidenceUrl("base",hash,"/token-transfers");
+ const url=nextEvidencePageUrl(original,{block_number:123,index:19});
+ assert.match(url,/base\.blockscout\.com\/api\/v2\/transactions/);
+ assert.match(url,/block_number=123/);
+ assert.equal(nextEvidencePageUrl("https://evil.example/api",{page:1}),null);
+ assert.equal(nextEvidencePageUrl(original,{"redirect?":"http://evil"}),null);
+ assert.equal(nextEvidencePageUrl(original,{block_number:"a".repeat(200)}),null);
+});
+test("incomplete transfer list remains unknown even if method claims swap",()=>{
+ const flow=[move(token,router,trader,qty(200)),move(quote,trader,router,qty(100,6),"6","USDC")];
+ const result=classifySwapEvidence(receipt("swapExactTokensForTokens"),flow,trader,token,{complete:false,swapEvent:swapEventEvidence([{topics:[SWAP_TOPICS.v3],address:{hash:router}}])});
+ assert.equal(result.kind,"unverified");
+ assert.equal(result.reason,"incomplete_logs");
 });
