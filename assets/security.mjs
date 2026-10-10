@@ -96,6 +96,7 @@ export function evaluateSecurity(token,chain){
     holder,
     holderCount:Number.isFinite(Number(token.holder_count))&&token.holder_count!==""&&!(Number(token.holder_count)===0&&Array.isArray(token.holders)&&token.holders.length>0)?Number(token.holder_count):null,
     owner:typeof token.owner_address==="string"&&/^0x[a-fA-F0-9]{40}$/.test(token.owner_address)?token.owner_address:null,
+    creator:typeof token.creator_address==="string"&&/^0x[a-fA-F0-9]{40}$/.test(token.creator_address)?token.creator_address:null,
     lpLock:"unknown"
   };
 }
@@ -110,6 +111,8 @@ function renderSummary(state){
 const brief=(key,lang)=>{
  const ko={
  is_honeypot:"제공사 모델의 판정이며 실제 매도 가능성을 보증하지 않습니다.",
+ transfer_pausable:"전송 중단 기능 감지입니다. 현재 관리자 권한 행사 가능 여부는 별도 확인해야 합니다.",
+ is_blacklisted:"블랙리스트 기능 감지입니다. 현재 관리자가 사용할 수 있다는 의미는 아닙니다.",
  is_open_source:"미검증 소스의 다른 검사 결과는 누락될 수 있습니다.",
  is_proxy:"업그레이드 가능성은 실제 권한 구조에 따라 달라집니다.",
  is_mintable:"추가 발행 기능 감지와 현재 발행 권한 사용 가능성은 다릅니다.",
@@ -118,6 +121,8 @@ const brief=(key,lang)=>{
  };
  const en={
  is_honeypot:"Provider signal only; successful selling is never guaranteed.",
+ transfer_pausable:"Capability signal; present-day admin control requires a separate check.",
+ is_blacklisted:"Blacklist code signal does not prove currently usable permissions.",
  is_open_source:"Missing verified source may make other checks unavailable.",
  is_proxy:"Actual upgrade powers depend on implementation and admin.",
  is_mintable:"Mint capability does not prove a currently usable mint authority.",
@@ -151,6 +156,8 @@ function initSafety(){
    textOr("security-unknown-count",String(result.unknown));
    textOr("security-checked-count",String(result.checked));
    textOr("security-holder-percent",result.holder.pct===null?"—":result.holder.pct.toFixed(1)+"%");
+   textOr("security-owner",result.owner||"—");
+   textOr("security-creator",result.creator||"—");
    textOr("security-holder-count",result.holderCount===null?"—":result.holderCount.toLocaleString("en-US"));
    textOr("security-holder-explain",result.holder.count===0?
      bilingual("No usable top-holder data reported.","활용 가능한 상위 홀더 정보가 제공되지 않았습니다."):
