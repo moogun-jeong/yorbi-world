@@ -273,6 +273,8 @@ function initSafety(){
    if(!token){showStatus(translated("No provider record. Token safety is unknown.","제공된 보안 분석 결과가 없어 안전 여부는 미확인입니다."),"unknown");return;}
    last={report:evaluateSecurity(token,chain),time:Date.now(),chain};
    render();
+   // Pass verified provider-reported metadata to read-only wallet analysis; no ownership inference.
+   window.dispatchEvent(new CustomEvent("yorbi:securityresult",{detail:{chain,address,creator:last.report.creator,owner:last.report.owner}}));
   }catch(err){
    if(id!==requestId)return;
    let message=translated("Provider unavailable (network/CORS/error). Safety is unknown.","GoPlus 조회 실패(네트워크·CORS·제공사 오류). 안전 상태는 미확인입니다.");

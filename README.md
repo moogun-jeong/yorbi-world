@@ -2,7 +2,7 @@
 
 Official early-stage character website for **YORBI**, an original fictional digital being born in the AI era.
 
-> **Genesis / Pre-token:** No YORBI token has been issued. There is no official YORBI token contract, presale, promised returns, confirmed exchange listing, full contract-security scanner, or active AI agent. The public read-only DEX pair lookup beta is available.
+> **Genesis / Pre-token:** No YORBI token has been issued. There is no official YORBI token contract, presale, promised returns, confirmed exchange listing, full contract-security scanner, or active AI agent. The read-only DEX lookup, third-party security signals and limited Ethereum/Base wallet-transfer sampling are available.
 
 ## Official channel
 - X: [@MeetYorbiAI](https://x.com/MeetYorbiAI)
@@ -142,6 +142,35 @@ This release deliberately improves comprehension **without pretending any additi
 5. Scan another token with absent fields; missing checks must never be labeled "safe".
 6. If a direct API request fails, display "unknown" instead of pretending the scan has passed.
 7. Avoid claiming browser/device click success until manually confirmed; GitHub static checks do not simulate a complete mobile session.
+
+## Sprint 6 — Evidence-first wallet radar (2026-10-11)
+
+**Status:** Beta read-only, free on-demand **Ethereum and Base only**. BNB Chain and Solana transfer-history tracing are explicitly unsupported in this iteration. No paid backend, API key, wallet signature or blockchain transaction is involved.
+
+### How it works
+
+1. After an existing DEX token lookup, show a **Track wallet activity** button. Unlike Safety Scan, these requests are **not** sent automatically; visitors must choose to run wallet analysis.
+2. Reuse the GoPlus **provider-reported creator address** from Safety Scan if available; this is *not* proof of the current owner or team.
+3. Query a public per-chain Blockscout v2 explorer for token metadata and the **first page of up to 50 ranked holders**, skipping addresses explicitly labeled as contracts, exchange/service wallets, liquidity pools or known burn addresses when metadata permits. Select up to **3 remaining EOA-looking addresses**, but **an unlabeled EOA can still be a custodian, bot or service**.
+4. Fetch up to the first **50 recent ERC-20 transfer log records** for each watched address, plus the reported token creator if available. Count only the **exact token's** inflows and outflows; direction and quantities are proof of **token movement**, **not proven market purchases or sales**.
+5. Match exact token transfer events directly connecting the reported creator and those watched holder addresses and link to the original transaction. Shared routers, relays, Solvers or pools are **not evidence of common wallet ownership**.
+6. Distinguish HTTP errors, rate limits, CORS restrictions, missing creator identity and pagination. Missing data never becomes a zero-sales assertion.
+
+### Critical research limits
+- **No actual DEX buy/sell classification**, swap tracing, fee-escrow claim provenance, profit calculation, token funding in native ETH, internal transfers, EIP-7702/4337 bundler traces or multi-hop connected wallet graph yet. Never label outgoing token transfers as "dumping".
+- Holder counts and holdings are Blockscout's current observations; token transfer logs are historical samples, **not** a net portfolio change since launch and **not** a fixed 24-hour window. Sampling can omit older transactions.
+- The creator (if reported) may be different from the controlling developer, token deployer, or owner. No contact details or real-world personal identities are inferred.
+- Blockchain activity is public. The user's browser calls a public external Blockscout explorer and may expose requested addresses/network metadata to the provider. No persistent address monitoring or visitor-search storage is implemented by YORBI.
+- **Provider availability is not guaranteed**: the public `eth.blockscout.com` and `base.blockscout.com` routes were sampled successfully, but public API rate limits, cross-origin policies or anti-bot protections can change.
+- BNB Chain does not currently have the same verified public Blockscout mainnet instance. It must not be silently aliased to another chain. Solana needs an entirely different transaction parser.
+
+### Tests
+```bash
+node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs
+```
+
+**Mobile acceptance:** PEPE Ethereum → Explorer shows live DEX + GoPlus results → tap Wallet Radar → top holder candidates and creator show links and bounded transfer evidence; check exact token address and tx hashes; try Base and two unsupported chains; change language; confirm missing creator remains unknown; check that a direct token move is not called a purchase/sale; verify the status from a real browser before declaring full functional validation.
+
 
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.

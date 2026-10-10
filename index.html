@@ -200,6 +200,47 @@ section[id]{scroll-margin-top:24px}
 .safety-admin-summary{border-left:3px solid #a1afe4;padding-left:11px}
 @media(max-width:600px){.safety-risk-first{padding:13px}.safety-subhead{flex-direction:column;align-items:flex-start}.safety-details summary{padding:13px}.safety-details ul{padding:0 13px}.safety-unchecked{padding:12px}.safety-address-link{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.safety-details summary>span:last-child{transition:none}}
+
+/* Sprint 6: bounded on-demand token-flow evidence; does not classify trades or linked owners */
+.tracker-panel{margin-top:32px;padding-top:28px;border-top:1px solid #dce5f4}
+.tracker-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.tracker-header h3{font-size:25px;letter-spacing:-.5px;margin:9px 0 12px}
+.tracker-header p,.tracker-notice{font-size:13px;line-height:1.75;color:#6a7793;max-width:660px}
+.tracker-beta{font-size:10px;background:#e8edff;color:#5759a7;border:1px solid #dce1fa;border-radius:16px;white-space:nowrap;padding:8px 12px;letter-spacing:.7px;font-weight:800}
+.tracker-actions{display:flex;gap:17px;flex-wrap:wrap;align-items:center;margin:19px 0}
+.tracker-actions .scan-button{height:46px}
+.tracker-notice{margin:0;flex:1}
+.tracker-status{background:#f2f5ff;border-radius:11px;color:#56688b;font-size:13px;line-height:1.7;padding:14px 16px}
+.tracker-status[data-kind=error],.tracker-status[data-kind=unsupported]{background:#fff1e7;color:#8e6344}
+.tracker-status[data-kind=ok]{background:#eaf6f2;color:#287360}
+.tracker-provenance{border:1px solid #dfe6f3;background:#fcfdff;border-radius:13px;padding:16px;margin:19px 0}
+.tracker-provenance strong{font-size:13px}
+.tracker-provenance p,.tracker-scope,.tracker-disclaimer,.tracker-relations>p{font-size:12px;line-height:1.8;color:#6e7d99}
+.tracker-source{color:#5b62b7;font-size:12px;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;font-weight:750}
+.tracker-creator{margin:11px 0;font-family:ui-monospace,monospace}
+.tracker-scope{padding:13px 16px;border-radius:11px;border-left:3px solid #9ebae7;background:#f4f7fc}
+.tracker-wallets-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:24px 0 15px}
+.tracker-wallets-heading h4,.tracker-relations h4{font-size:16px;margin:0}
+.tracker-wallets-heading span{font-size:11px;color:#745d90}
+.tracker-wallets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tracker-wallet-card{min-width:0;border:1px solid #e1e7f2;border-radius:15px;background:#fff;padding:17px}
+.tracker-wallet-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.tracker-wallet-head strong{font-size:13px}
+.tracker-share{color:#59658c;font-size:12px;font-weight:800}
+.tracker-flow-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.tracker-flow-grid>div{border-radius:10px;background:#f5f7fd;border:1px solid #e8edf7;padding:11px;min-width:0}
+.tracker-flow-grid small,.tracker-flow-grid span{display:block;font-size:10px;color:#72819c;line-height:1.5}
+.tracker-flow-grid strong{display:block;font-variant-numeric:tabular-nums;font-size:17px;color:#202a4b;margin:5px 0}
+.tracker-mini,.tracker-error{font-size:11px;line-height:1.7;color:#7b85a0}
+.tracker-error{color:#a56748}
+.tracker-recent{border-top:1px solid #e4e9f4;margin-top:15px;padding-top:11px}
+.tracker-recent summary{font-weight:750;font-size:12px;color:#6367aa;cursor:pointer}
+.tracker-recent ul{margin:11px 0 0;padding-left:14px}
+.tracker-recent li{font-size:11px;line-height:1.8;overflow-wrap:anywhere}
+.tracker-relations{margin-top:19px;padding:19px;border:1px solid #e3e9f5;border-radius:15px;background:#fcfdff}
+.tracker-connection{font-size:12px;line-height:1.8;padding:8px 0;overflow-wrap:anywhere}
+.tracker-disclaimer{background:#f6f7fa;border-radius:12px;padding:15px 17px}
+@media(max-width:740px){.tracker-header{flex-direction:column}.tracker-wallets{grid-template-columns:1fr}.tracker-actions{align-items:stretch;flex-direction:column}.tracker-actions button{width:100%}.tracker-wallets-heading{flex-direction:column;align-items:flex-start}.tracker-header h3{font-size:22px}}
 </style>
 </head><body>
 <div class="topnote">✦ GENESIS CHAPTER &nbsp;·&nbsp; <b data-en="NO TOKEN HAS BEEN ISSUED" data-ko="아직 토큰이 발행되지 않았습니다">NO TOKEN HAS BEEN ISSUED</b> &nbsp;·&nbsp; ✦</div>
@@ -317,15 +358,48 @@ section[id]{scroll-margin-top:24px}
 <a id="security-source" href="https://docs.gopluslabs.io/reference/tokensecurityusingget_1" rel="noopener noreferrer" target="_blank" data-en="GoPlus response source ↗" data-ko="GoPlus 응답 원본 확인 ↗">GoPlus response source ↗</a></div>
 <p class="safety-limit" data-en="No flags detected does NOT mean SAFE. This is third-party API data, not an audit or real sell simulation. Values can be incomplete, stale, wrong or unavailable." data-ko="신호가 감지되지 않았다고 안전한 코인은 아닙니다. 외부 API 정보이며 실제 매도 시뮬레이션이나 보안 감사가 아닙니다. 값이 누락·지연·오류일 수 있습니다.">No flags detected does NOT mean SAFE. This is third-party API data, not an audit or real sell simulation. Values can be incomplete, stale, wrong or unavailable.</p>
 </section>
+
+<section id="wallet-tracker" class="tracker-panel" hidden aria-label="On-chain wallet activity">
+  <div class="tracker-header">
+    <div>
+      <span class="scan-small-label" data-en="EXPERIMENTAL · ON-CHAIN EVIDENCE" data-ko="실험적 기능 · 온체인 근거">EXPERIMENTAL · ON-CHAIN EVIDENCE</span>
+      <h3 data-en="YORBI Wallet Radar" data-ko="YORBI 지갑 추적">YORBI Wallet Radar</h3>
+      <p data-en="Check a token's top holder sample, a provider-reported creator address and recent ERC-20 transfer evidence. Not a forensic ownership verdict." data-ko="토큰의 상위 홀더 표본, 제공사 기준 생성자 주소, 최근 ERC-20 전송 근거를 확인합니다. 지갑 소유 관계를 판정하는 서비스는 아닙니다.">Check a token's top holder sample, a provider-reported creator address and recent ERC-20 transfer evidence. Not a forensic ownership verdict.</p>
+    </div>
+    <span class="tracker-beta" data-en="ETH / BASE BETA" data-ko="ETH / BASE 베타">ETH / BASE BETA</span>
+  </div>
+  <div class="tracker-actions">
+    <button id="tracker-run" type="button" class="scan-button" data-en="Track wallet activity →" data-ko="지갑 활동 추적하기 →">Track wallet activity →</button>
+    <p class="tracker-notice" data-en="Manual lookup only. No wallet access or trading. Up to 3 holder wallets + 1 creator; newest 50 token transfers per wallet." data-ko="버튼을 누를 때만 조회합니다. 지갑 접근·거래 없음. 상위 주소 최대 3개와 생성자 최대 1개, 각 주소별 최근 토큰 이동 최대 50건을 확인합니다.">Manual lookup only. No wallet access or trading. Up to 3 holder wallets + 1 creator; newest 50 token transfers per wallet.</p>
+  </div>
+  <p id="tracker-status" class="tracker-status" role="status" aria-live="polite" data-kind="info" data-en="Choose a valid token to begin." data-ko="토큰을 조회하면 지갑 추적을 시작할 수 있습니다.">Choose a valid token to begin.</p>
+  <div id="tracker-summary" hidden>
+    <div class="tracker-provenance">
+      <strong data-en="Token creator (GoPlus metadata)" data-ko="토큰 생성자 (GoPlus 제공 정보)">Token creator (GoPlus metadata)</strong>
+      <div id="tracker-creator" class="tracker-creator">—</div>
+      <p data-en="The creator address may be missing or may differ from the current owner/team. Do not equate a creator, a token holder and a wallet controller." data-ko="생성자 주소는 누락되거나 현재 소유자·운영팀과 다를 수 있습니다. 생성자·홀더·지갑 통제자를 동일인으로 단정할 수 없습니다.">The creator address may be missing or may differ from the current owner/team. Do not equate a creator, a token holder and a wallet controller.</p>
+    </div>
+    <p id="tracker-scope" class="tracker-scope"></p>
+    <div class="tracker-wallets-heading"><h4 data-en="Wallet activity samples" data-ko="지갑별 토큰 이동 표본">Wallet activity samples</h4><span data-en="Incoming ≠ BUY · Outgoing ≠ SELL" data-ko="유입 ≠ 매수 · 유출 ≠ 매도">Incoming ≠ BUY · Outgoing ≠ SELL</span></div>
+    <div id="tracker-wallets" class="tracker-wallets"></div>
+    <div class="tracker-relations">
+      <h4 data-en="Direct creator ↔ watched-holder token transfers" data-ko="생성자 ↔ 추적 홀더 간 직접 토큰 이동">Direct creator ↔ watched-holder token transfers</h4>
+      <div id="tracker-links"></div>
+      <p data-en="A direct transfer proves movement between addresses, NOT common ownership, insider coordination or market manipulation. Shared DEX routers do not establish relationships. Native-coin funding, internal transfers and older pages are NOT checked." data-ko="직접 전송은 주소 간 토큰 이동의 근거일 뿐 같은 소유자, 내부자 공모, 시세 조작의 증거가 아닙니다. 동일 DEX 라우터 사용도 연결 지갑 근거가 아닙니다. 네이티브 코인 자금 지원, 내부 거래, 오래된 페이지는 검사하지 않습니다.">A direct transfer proves movement between addresses, NOT common ownership, insider coordination or market manipulation. Shared DEX routers do not establish relationships. Native-coin funding, internal transfers and older pages are NOT checked.</p>
+    </div>
+    <p class="tracker-disclaimer" data-en="The first 50 ranked holders and up to 50 latest token transfers per watched wallet are only bounded samples; not all history or a 24-hour window. Labeled service wallets are skipped when identifiable, but unlabeled exchange wallets can remain. No verified swaps, sells, buys, trading profit, 7702 inner traces, fee escrow claims, gas funding or multi-hop clusters are analyzed. Data source: public Blockscout instance; actual API coverage and browser support vary." data-ko="상위 홀더 50개와 추적 주소당 최근 토큰 전송 최대 50건은 제한된 표본입니다. 전체 기간이나 최근 24시간 집계가 아닙니다. 표시된 서비스 지갑은 제외하지만 미표시 거래소 지갑은 남을 수 있습니다. 실제 스왑·매수·매도·실현손익·7702 내부 실행·수수료 에스크로·가스 자금 지원·다단계 연결 지갑은 분석하지 않습니다. 데이터 출처는 Blockscout 공개 인스턴스이며 체인과 브라우저별 접근 가능성은 달라질 수 있습니다.">The first 50 ranked holders and up to 50 latest token transfers per watched wallet are only bounded samples; not all history or a 24-hour window. Labeled service wallets are skipped when identifiable, but unlabeled exchange wallets can remain. No verified swaps, sells, buys, trading profit, 7702 inner traces, fee escrow claims, gas funding or multi-hop clusters are analyzed. Data source: public Blockscout instance; actual API coverage and browser support vary.</p>
+  </div>
+</section>
+
 <div class="scan-disclaimer">
      <strong data-en="Limitations of Explorer and Safety Scan" data-ko="Explorer·안전 신호 점검의 한계">What this does NOT check</strong>
-     <p data-en="This shows public DEX pairs and GoPlus third-party security flags. It is NOT an audit, guaranteed honeypot-free certificate, real sell simulation, LP lock verification, developer wallet tracing or investment advice. Missing data (—) is unknown, not zero." data-ko="DEX 정보와 GoPlus 외부 보안 위험 신호를 제공하지만, 컨트랙트 감사·허니팟 안전 보장·실제 매도 테스트·LP 잠금 검증·개발자 지갑 추적·투자 추천은 아닙니다. 누락(—)은 0이 아닌 미확인입니다.">This shows public DEX pairs and GoPlus third-party security flags. It is NOT an audit, guaranteed honeypot-free certificate, real sell simulation, LP lock verification, developer wallet tracing or investment advice. Missing data (—) is unknown, not zero.</p>
+     <p data-en="This shows public DEX pairs, GoPlus third-party security flags and limited on-chain transfer samples for Ethereum/Base. It is NOT an audit, proven buy/sell detector, linked-owner proof, LP lock verification, full wallet tracing or investment advice. Missing data (—) is unknown, not zero." data-ko="DEX 데이터, GoPlus 외부 보안 신호, Ethereum·Base의 제한된 온체인 전송 표본을 제공합니다. 컨트랙트 감사·실제 매매 판정·지갑 동일 소유자 판정·LP 잠금 검증·전체 지갑 추적·투자 추천이 아닙니다. 누락(—)은 0이 아닌 미확인입니다.">This shows public DEX pairs and GoPlus third-party security flags. It is NOT an audit, guaranteed honeypot-free certificate, real sell simulation, LP lock verification, developer wallet tracing or investment advice. Missing data (—) is unknown, not zero.</p>
      <a href="https://docs.dexscreener.com/api/reference" target="_blank" rel="noopener noreferrer" data-en="Data source: DEX Screener public API ↗" data-ko="데이터 출처: DEX Screener 공개 API ↗">Data source: DEX Screener public API ↗</a>
    </div>
   </div>
 </div></section>
 
-<section id="evolution" class="wrap section"><div class="kicker" data-en="05 / EVOLUTION" data-ko="05 / 진화">05 / EVOLUTION</div><h2 data-en="Small steps. Real progress." data-ko="작지만 실제로 나아가는 단계.">Small steps. Real progress.</h2><p class="sub" data-en="YORBI evolves when actual features are built — never because of token prices or market hype." data-ko="YORBI는 토큰 가격이 아닌 실제 개발 기능과 성과에 따라 성장합니다.">YORBI evolves when actual features are built — never because of token prices or market hype.</p><div class="roadmap"><div class="step step-current"><span class="num">01 · NOW</span><span class="step-badge" data-en="SITE LIVE" data-ko="사이트 공개">SITE LIVE</span><h3>Genesis</h3><p>Character identity, community introduction and website.</p></div><div class="step"><span class="num">02 · NOW</span><span class="step-badge" data-en="DAILY NOTES LIVE" data-ko="데일리 기록 공개">DAILY NOTES LIVE</span><h3>Awakening</h3><p>First verified field notes and public build history are available.</p></div><div class="step"><span class="num">03 · BETA</span><span class="step-badge" data-en="DEX LOOKUP LIVE" data-ko="DEX 조회 공개">DEX LOOKUP LIVE</span><h3>Explorer</h3><p>DEX lookup and third-party security signals are live. Independent audits and wallet tracing are not.</p></div><div class="step"><span class="num">04 · FUTURE</span><span class="step-badge pending" data-en="NOT LIVE" data-ko="미구현">NOT LIVE</span><h3>Evolution</h3><p>Community-driven ideas and useful capabilities.</p></div></div></section>
+<section id="evolution" class="wrap section"><div class="kicker" data-en="05 / EVOLUTION" data-ko="05 / 진화">05 / EVOLUTION</div><h2 data-en="Small steps. Real progress." data-ko="작지만 실제로 나아가는 단계.">Small steps. Real progress.</h2><p class="sub" data-en="YORBI evolves when actual features are built — never because of token prices or market hype." data-ko="YORBI는 토큰 가격이 아닌 실제 개발 기능과 성과에 따라 성장합니다.">YORBI evolves when actual features are built — never because of token prices or market hype.</p><div class="roadmap"><div class="step step-current"><span class="num">01 · NOW</span><span class="step-badge" data-en="SITE LIVE" data-ko="사이트 공개">SITE LIVE</span><h3>Genesis</h3><p>Character identity, community introduction and website.</p></div><div class="step"><span class="num">02 · NOW</span><span class="step-badge" data-en="DAILY NOTES LIVE" data-ko="데일리 기록 공개">DAILY NOTES LIVE</span><h3>Awakening</h3><p>First verified field notes and public build history are available.</p></div><div class="step"><span class="num">03 · BETA</span><span class="step-badge" data-en="DEX LOOKUP LIVE" data-ko="DEX 조회 공개">DEX LOOKUP LIVE</span><h3>Explorer</h3><p>DEX, security signals and limited Ethereum/Base wallet flow are live. Verified swap/sell evidence and full linked-wallet tracing remain planned.</p></div><div class="step"><span class="num">04 · FUTURE</span><span class="step-badge pending" data-en="NOT LIVE" data-ko="미구현">NOT LIVE</span><h3>Evolution</h3><p>Community-driven ideas and useful capabilities.</p></div></div></section>
 <section id="proof" class="soft"><div class="wrap section">
 <div class="kicker" data-en="06 / PROOF CENTER" data-ko="06 / 투명성 센터">06 / PROOF CENTER</div>
 <h2 data-en="Playful outside. Transparent inside." data-ko="재미는 가볍게. 운영은 투명하게.">Playful outside. Transparent inside.</h2>
@@ -333,7 +407,7 @@ section[id]{scroll-margin-top:24px}
 <div class="proof-grid" aria-label="Current project status">
   <div class="proof-card"><span class="proof-pill proof-live" data-en="● LIVE" data-ko="● 운영 중">● LIVE</span><h3 data-en="Official website" data-ko="공식 홈페이지">Official website</h3><p data-en="The Genesis landing page is publicly available." data-ko="Genesis 소개 홈페이지가 공개되어 있습니다.">The Genesis landing page is publicly available.</p></div>
   <div class="proof-card"><span class="proof-pill proof-none" data-en="● NOT ISSUED" data-ko="● 미발행">● NOT ISSUED</span><h3 data-en="YORBI token" data-ko="YORBI 토큰">YORBI token</h3><p data-en="No token, contract address, presale or airdrop exists." data-ko="토큰·공식 컨트랙트 주소·사전판매·에어드롭이 없습니다.">No token, contract address, presale or airdrop exists.</p></div>
-  <div class="proof-card"><span class="proof-pill proof-live" data-en="● BETA LIVE" data-ko="● 베타 운영 중">● BETA LIVE</span><h3>YORBI Explorer</h3><p data-en="DEX lookup and third-party GoPlus risk flags are live. Audits, guaranteed sell tests and wallet tracing are not available." data-ko="DEX 조회와 GoPlus 외부 위험 신호는 제공되지만 컨트랙트 감사·매도 성공 보장·지갑 추적은 지원하지 않습니다.">DEX pair lookup is live. Contract audits, safety verdicts and wallet tracing are not available.</p></div>
+  <div class="proof-card"><span class="proof-pill proof-live" data-en="● BETA LIVE" data-ko="● 베타 운영 중">● BETA LIVE</span><h3>YORBI Explorer</h3><p data-en="DEX lookup, GoPlus flags and limited Ethereum/Base on-chain wallet samples are live. Full tracing, buy/sell verification and audits are not." data-ko="DEX·GoPlus 분석과 Ethereum·Base 지갑 전송 표본을 제공합니다. 전체 지갑 추적·실제 매매 판정·보안 감사는 미지원입니다.">DEX pair lookup is live. Contract audits, safety verdicts and wallet tracing are not available.</p></div>
   <div class="proof-card"><span class="proof-pill proof-planned" data-en="● PLANNED" data-ko="● 계획 중">● PLANNED</span><h3>YORBI Talks</h3><p data-en="No live AI chat or agent is running." data-ko="현재 운영 중인 AI 챗봇이나 에이전트는 없습니다.">No live AI chat or agent is running.</p></div>
 </div>
 <div class="disclosure">
@@ -374,7 +448,7 @@ section[id]{scroll-margin-top:24px}
     ["#evolution .step:nth-child(4) .num","04 · FUTURE","04 · 향후"],
     ["#evolution .step:nth-child(1) p","Character identity, community introduction and website.","캐릭터 정체성, 커뮤니티 소개, 공식 홈페이지."],
     ["#evolution .step:nth-child(2) p","First verified field notes and public build history are available.","검증한 첫 탐험 기록과 공개 개발 이력을 확인할 수 있습니다."],
-    ["#evolution .step:nth-child(3) p","Basic DEX pair lookup is live. Contract risk checks and wallet tracing are planned.","DEX 조회와 외부 위험 신호는 제공되며 독립적 보안 감사와 지갑 추적은 지원하지 않습니다."],
+    ["#evolution .step:nth-child(3) p","Basic DEX pair lookup is live. Contract risk checks and wallet tracing are planned.","DEX·외부 보안 신호와 Ethereum·Base 지갑 이동 표본을 제공합니다. 매매 검증과 전체 연결 지갑 추적은 개발 예정입니다."],
     ["#evolution .step:nth-child(4) p","Community-driven ideas and useful capabilities.","커뮤니티 제안과 실제로 유용한 기능 확장."],
     ["#proof .social","𝕏 Follow the Genesis story ↗","𝕏 제네시스 이야기 팔로우 ↗"]
   ];
@@ -416,4 +490,5 @@ section[id]{scroll-margin-top:24px}
 </script>
 <script type="module" src="assets/explorer.mjs"></script>
 <script type="module" src="assets/security.mjs"></script>
+<script type="module" src="assets/wallet-radar.mjs"></script>
 </body></html>
