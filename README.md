@@ -172,6 +172,20 @@ node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.t
 **Mobile acceptance:** PEPE Ethereum → Explorer shows live DEX + GoPlus results → tap Wallet Radar → top holder candidates and creator show links and bounded transfer evidence; check exact token address and tx hashes; try Base and two unsupported chains; change language; confirm missing creator remains unknown; check that a direct token move is not called a purchase/sale; verify the status from a real browser before declaring full functional validation.
 
 
+## Sprint 6.1 — Evidence review of DEX swaps and creator funding (2026-10-11)
+
+**Status:** Implemented as an opt-in follow-up to Wallet Radar. No GitHub Actions, no paid API, no wallet permissions, no automated trading.
+
+1. After Explorer → Safety Scan → Wallet Radar, click **Inspect transaction evidence**. This is a **separate manual action** that requests at most **six watched-address/transaction pairs**, sampling up to two recent nonzero token-transfer hashes per followed wallet.
+2. Public Blockscout transaction details are inspected: successful execution, explicit swap method name and **opposite-direction ERC-20 quote asset movement involving the same watched address** must coexist to label a token receipt/spend as **DEX swap evidence**. Successful ordinary `transfer()` transactions remain **token transfers, not verified buys/sells**; swap signatures with missing payment or incomplete logs are **unclassified**. EIP-7702, multi-contract aggregators, native-ETH payment paths, internal traces, and bundler settlement may remain unclassified even when a real trade happened.
+3. Where a GoPlus-reported creator is available, read its **first Blockscout outer transaction page** and show **positive native ETH value** sent directly to the three watched wallets by the creator. This is a **financial transaction link**, *not* proof of common ownership or the origin of funds. The page does not inspect internal/native transfers emitted by contracts or historic pages.
+4. Each classification and observed creator→holder ETH transfer links to the raw Blockscout transaction and is explicitly a **bounded sample**. No historical total, profit calculation, complete attribution, DEX settlement proof, launch bundle audit, approval exploit detection, fee escrow source tracing, or multi-hop relationship network is claimed.
+5. All browser requests use publicly accessible `eth.blockscout.com` or `base.blockscout.com` v2 APIs, triggered by the user's explicit button. Due to public rate limits, individual TX requests are sequential. The feature can take time or show **unavailable** for failed requests. No private keys, access tokens, or wallet signatures are used.
+6. A true OVO-style forensic audit across proxy routers, native-asset settlement, gas funding, 7702 smart wallets and multi-hop related wallets remains **future work** and requires more exhaustive transaction decoding. The UI must not promise those capabilities.
+
+Manual verification: scan PEPE Ethereum, inspect a holder's raw transaction. An ordinary `transfer` call must be labeled a transfer, never a buy or sell. For real swaps, require explicit swap call plus both token and quote payment from the watched wallet. Confirm the same chain/contract/tx reference before accepting a result. Test no creator, no pending transaction, API timeout, language switch and unsupported chains. Do not advertise end-to-end iPhone success until tested by the user.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

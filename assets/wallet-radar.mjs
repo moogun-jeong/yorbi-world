@@ -269,6 +269,20 @@ function initTracker(){
     const linked=creatorRecord?.raw?directTokenLinks(creatorRecord.raw,creatorAddress,holderList.selected,address,chain):[];
     last={holderList,creatorRecord,records,links:linked,creatorAddress};
     render();
+    // Inform the optional evidence review only after the user explicitly ran Wallet Radar.
+    const candidates=[...records,creatorRecord].filter(Boolean);
+    const sources=[];
+    for(const rec of candidates){
+      if(rec.error||!rec.summary)continue;
+      for(const ev of rec.summary.recent.slice(0,2)){
+        if(ev.amount===null||ev.amount<=0)continue;
+        sources.push({wallet:rec.address,hash:ev.hash});
+      }
+    }
+    window.dispatchEvent(new CustomEvent("yorbi:walletsample",{detail:{
+       chain,token:address,creator:creatorAddress,
+       holders:holderList.selected.map(w=>w.address),samples:sources.slice(0,8)
+    }}));
   }catch(err){
     if(job!==version)return;
     const msg=err?.message==="RATE_LIMIT"?ui("Explorer rate limit reached; retry later.","탐색기 요청 제한입니다. 잠시 뒤 재시도하세요."):
