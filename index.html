@@ -175,6 +175,31 @@ section[id]{scroll-margin-top:24px}
 .safety-limit{font-size:12px;color:#727c92;line-height:1.7}
 @media(max-width:600px){.safety-heading{flex-direction:column}.safety-stats{gap:6px}.safety-stats>div{padding:10px 7px}.safety-stats small{font-size:10px}.safety-stats strong{font-size:19px}.safety-row{align-items:flex-start}.safety-chip{font-size:10px}.safety-holders{padding:12px}}
 .safety-auth{display:flex;flex-direction:column;gap:10px;margin-top:15px}.safety-auth>div{min-width:0}.safety-auth small{display:block;font-size:11px;color:#6b7792;font-weight:750;margin-bottom:3px}.safety-auth code{font-size:12px;overflow-wrap:anywhere;color:#48567c}
+.safety-scope{padding:11px 14px;background:#f7f8fc;border:1px solid #e0e5f0;border-radius:10px;color:#526481;font-size:12px;line-height:1.7}
+.safety-unchecked{border-left:3px solid #eebf80;background:#fffaf1;padding:13px 16px;border-radius:0 12px 12px 0;margin:13px 0 25px}
+.safety-unchecked strong{font-size:13px;color:#875b2a}
+.safety-unchecked p{margin:6px 0 0;font-size:12px;color:#806f5b;line-height:1.7}
+.safety-risk-first{background:#fff8f8;border:1px solid #efd9df;border-radius:17px;padding:17px 20px;margin:18px 0}
+.safety-subhead{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.safety-subhead h4{font-size:16px;line-height:1.4;margin:0;color:#8e344d}
+.safety-subhead span{font-size:10px;color:#917b87;text-align:right}
+.safety-risk-brief{font-size:13px;line-height:1.8;color:#754859;margin:14px 0}
+.safety-zero-risk{color:#546683;font-size:12px}
+.safety-details{border:1px solid #e1e6f1;border-radius:14px;background:#fff;margin-top:13px;overflow:hidden}
+.safety-details summary{display:flex;justify-content:space-between;gap:12px;align-items:center;cursor:pointer;padding:15px 18px;color:#405074;font-size:13px;font-weight:800}
+.safety-details summary>span:last-child{font-size:18px;color:#7a82a3;transition:transform .15s}
+.safety-details[open] summary>span:last-child{transform:rotate(45deg)}
+.safety-details[open] summary{background:#f7f9ff}
+.safety-details ul{padding:0 18px;margin-bottom:5px}
+.safety-address{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}
+.safety-address-link{font-size:13px;font-family:ui-monospace,SFMono-Regular,monospace;font-weight:750;text-decoration:underline;text-underline-offset:3px;color:#5b64b6;overflow-wrap:anywhere}
+.safety-address-empty{color:#8690a7}
+.safety-copy{padding:7px 11px;border-radius:9px;border:1px solid #d3dcf0;background:white;color:#4c5d82;cursor:pointer;font-weight:800;font-size:11px}
+.safety-copy:hover{background:#edf1fa}
+.safety-copy-status{min-height:0;color:#4d6c9c;font-size:12px}
+.safety-admin-summary{border-left:3px solid #a1afe4;padding-left:11px}
+@media(max-width:600px){.safety-risk-first{padding:13px}.safety-subhead{flex-direction:column;align-items:flex-start}.safety-details summary{padding:13px}.safety-details ul{padding:0 13px}.safety-unchecked{padding:12px}.safety-address-link{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.safety-details summary>span:last-child{transition:none}}
 </style>
 </head><body>
 <div class="topnote">✦ GENESIS CHAPTER &nbsp;·&nbsp; <b data-en="NO TOKEN HAS BEEN ISSUED" data-ko="아직 토큰이 발행되지 않았습니다">NO TOKEN HAS BEEN ISSUED</b> &nbsp;·&nbsp; ✦</div>
@@ -260,13 +285,32 @@ section[id]{scroll-margin-top:24px}
 <div class="safety-stats">
 <div><small data-en="Risk signals found" data-ko="위험 신호 감지">Risk signals found</small><strong id="security-risk-count">—</strong></div>
 <div><small data-en="Not flagged" data-ko="해당 신호 미감지">Not flagged</small><strong id="security-checked-count">—</strong></div>
-<div><small data-en="Unknown / missing" data-ko="미확인·미지원">Unknown / missing</small><strong id="security-unknown-count">—</strong></div></div>
-<ul id="security-checks" class="safety-checks"></ul>
+<div><small data-en="Unknown (GoPlus checks)" data-ko="GoPlus 검사 내 미확인">Unknown (GoPlus checks)</small><strong id="security-unknown-count">—</strong></div></div>
+<p id="security-scope-note" class="safety-scope" role="note"></p>
+<div class="safety-unchecked" aria-label="Checks outside provider scope">
+  <strong data-en="Still NOT checked by this scanner" data-ko="이 검사에서 여전히 확인되지 않는 항목">Still NOT checked by this scanner</strong>
+  <p data-en="LP lock and rug risk · Real sell execution · Current admin control · Creator-linked wallets" data-ko="LP 잠금·러그 위험 · 실제 매도 성공 · 현재 관리자 권한 행사 · 개발팀 연결 지갑">LP lock and rug risk · Real sell execution · Current admin control · Creator-linked wallets</p>
+</div>
+<div class="safety-risk-first">
+  <div class="safety-subhead"><h4 data-en="Priority: detected risk signals" data-ko="우선 확인: 감지된 위험 신호">Priority: detected risk signals</h4><span data-en="GoPlus code/data flags" data-ko="GoPlus 코드·데이터 신호">GoPlus code/data flags</span></div>
+  <p id="security-risk-brief" class="safety-risk-brief"></p>
+  <p id="security-no-alerts" hidden class="safety-zero-risk" data-en="No flagged checks were reported. This does NOT certify safety." data-ko="제공사가 반환한 항목에서 위험 신호가 감지되지 않았지만 안전 인증은 아닙니다.">No flagged checks were reported. This does NOT certify safety.</p>
+  <ul id="security-alerts" class="safety-checks"></ul>
+</div>
+<details id="security-checked-group" class="safety-details">
+  <summary><span id="security-checked-label">View checks not flagged</span><span aria-hidden="true">＋</span></summary>
+  <ul id="security-checks" class="safety-checks"></ul>
+</details>
+<details id="security-unknown-group" class="safety-details">
+  <summary><span id="security-unknown-label">View unavailable checks</span><span aria-hidden="true">＋</span></summary>
+  <ul id="security-unknown-checks" class="safety-checks"></ul>
+</details>
 <div class="safety-holders"><h4 data-en="Top holders (provider reported)" data-ko="상위 홀더 (제공사 기준)">Top holders (provider reported)</h4>
 <div class="safety-holder-grid">
 <div><small data-en="Reported holdings sum" data-ko="제공된 지분 비율 합계">Reported holdings sum</small><strong id="security-holder-percent">—</strong></div>
 <div><small data-en="Total holder count" data-ko="전체 홀더 수">Total holder count</small><strong id="security-holder-count">—</strong></div></div>
-<p id="security-holder-explain"></p><div class="safety-auth"><div><small data-en="Reported contract owner" data-ko="제공사 기준 컨트랙트 소유자">Reported contract owner</small><code id="security-owner">—</code></div><div><small data-en="Reported token creator" data-ko="제공사 기준 토큰 생성자">Reported token creator</small><code id="security-creator">—</code></div></div>
+<p id="security-holder-explain"></p><p id="security-copy-status" role="status" aria-live="polite" class="safety-copy-status"></p><div class="safety-auth"><div><small data-en="Reported contract owner" data-ko="제공사 기준 컨트랙트 소유자">Reported contract owner</small><div id="security-owner" class="safety-address">—</div></div><div><small data-en="Reported token creator" data-ko="제공사 기준 토큰 생성자">Reported token creator</small><div id="security-creator" class="safety-address">—</div></div></div>
+<p id="security-admin-brief" class="safety-admin-summary"></p>
 <p data-en="Detected admin code functions do not prove that a present owner can exercise them. A zero or burn owner may indicate disabled ownership, but hidden/admin paths still need independent verification." data-ko="관리 기능이 감지돼도 현재 소유자가 실제로 행사할 수 있다는 증거는 아닙니다. 0 주소·소각 주소는 권한 비활성 가능성을 시사하지만 숨겨진 관리자 경로는 별도로 검증해야 합니다.">Detected admin code functions do not prove that a present owner can exercise them. A zero or burn owner may indicate disabled ownership, but hidden/admin paths still need independent verification.</p>
 <p data-en="LP lock / rug-pull safety: NOT VERIFIED. Top wallets may include exchanges, burn, pool and locker addresses. No developer ownership is inferred." data-ko="LP 잠금·러그풀 위험: 미확인. 상위 홀더에 거래소·소각·유동성 풀·락커 지갑이 포함될 수 있습니다. 이를 개발자 보유량으로 단정하지 않습니다.">LP lock / rug-pull safety: NOT VERIFIED. Top wallets may include exchanges, burn, pool and locker addresses. No developer ownership is inferred.</p></div>
 <div class="safety-links"><span><span data-en="Checked at" data-ko="조회 시각">Checked at</span>: <time id="security-timestamp">—</time></span>

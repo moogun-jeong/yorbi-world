@@ -122,6 +122,27 @@ node --test tests/explorer.test.mjs tests/security.test.mjs
 Manual mobile acceptance: select Ethereum, use the PEPE example and verify GoPlus analysis is loaded separately; switch language and ensure the results are not cleared; try unknown and invalid contracts; verify that any failed security API call is marked unknown, never safe. Verify the GoPlus raw response and DEX Screener references. If GoPlus CORS is blocked in real browsers, treat Safety Scan as **limited/unavailable**, not implemented successfully from the user's perspective, until a safe zero-cost backend path is arranged.
 
 
+## Sprint 5.1 — Safety Scan mobile UX & interpretation (2026-10-11)
+
+This release deliberately improves comprehension **without pretending any additional checks were performed**:
+
+- Show reported risk flags in a dedicated priority section **before** the other checks.
+- Default-collapse third-party flags that were **not detected** and any checks where the provider returned **unknown/missing**. All original indicators remain available via native accessible `details` sections.
+- Scope the "unknown" count to **GoPlus fields returned by the provider**. An explicit always-visible notice clarifies that LP lock/rug risk, actual sell execution, current admin control and connected wallets remain **outside coverage**, even when provider unknown count is zero.
+- Display truncated owner and creator addresses with chain-specific, validated explorer links: Ethereum → Etherscan; BNB Chain → BscScan; Base → BaseScan; Solana → Solscan. Copy buttons copy the **entire** underlying wallet address through the browser clipboard API, with accessible status/error feedback. Long addresses are never rendered unescaped into HTML.
+- Explain when a zero-address owner is reported: potentially renounced ownership is **not proof that detected code permissions can or cannot be exercised**.
+- Updates continue to support English/Korean, source links, small-screen layouts, third-party limitations and a zero-cost static Cloudflare Workers deployment.
+- Unit tests increased to **16**, covering all earlier security behavior plus address abbreviation, safe explorer URLs, unknown-count scope and owner-vs-capability interpretation.
+
+### Operational smoke test
+1. On mobile, scan PEPE using the example: two GoPlus flags (as of the sampled data) should be at the top; the rest appear under a closed "not flagged" accordion.
+2. Check the notice below the counters states that "unknown 0" is only for GoPlus fields, not LP/sell/admin/wallet coverage.
+3. Tap each address's verified explorer link and copy button; confirm a complete address is copied. On HTTPS, clipboard usually works; browser permissions may block it and should show explanatory fallback.
+4. Change EN/KO while results are visible. Check accordions and risk summaries translate without re-querying.
+5. Scan another token with absent fields; missing checks must never be labeled "safe".
+6. If a direct API request fails, display "unknown" instead of pretending the scan has passed.
+7. Avoid claiming browser/device click success until manually confirmed; GitHub static checks do not simulate a complete mobile session.
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

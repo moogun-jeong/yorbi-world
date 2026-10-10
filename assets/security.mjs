@@ -100,122 +100,202 @@ export function evaluateSecurity(token,chain){
     lpLock:"unknown"
   };
 }
+
+/** Present shortened wallet addresses without losing the full address for copy / explorer. */
+export function compactAddress(address){
+ if(typeof address!=="string")return "—";
+ if(/^0x[a-fA-F0-9]{40}$/.test(address))return address.slice(0,8)+"…"+address.slice(-6);
+ if(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address))return address.slice(0,6)+"…"+address.slice(-6);
+ return "—";
+}
+export function explorerAddressUrl(chain,address){
+ if(typeof address!=="string")return null;
+ if(chain==="solana"){
+   return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)?"https://solscan.io/account/"+address:null;
+ }
+ if(!/^0x[a-fA-F0-9]{40}$/.test(address))return null;
+ const hosts={ethereum:"etherscan.io",bsc:"bscscan.com",base:"basescan.org"};
+ const host=hosts[chain];return host?"https://"+host+"/address/"+address:null;
+}
+/** These are detections from a provider, not a universal number of unverified risks. */
+export function coverageDescription(report,lang="en"){
+ const checked=report?.checks?.length||0;
+ const missing=report?.unknown||0;
+ if(lang==="ko")return "GoPlus 제공 검사 "+checked+"개 중 미확인 "+missing+"개입니다. LP 잠금, 실제 매도 성공, 관리자 권한 행사 가능 여부, 연결 지갑은 이 숫자에 포함되지 않습니다.";
+ return missing+" of "+checked+" GoPlus checks were unknown. LP locks, real sell execution, active admin authority and linked wallets are outside this count.";
+}
+
 function textOr(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
 function create(tag,css,text){
-  const node=document.createElement(tag);if(css)node.className=css;if(text!==undefined)node.textContent=text;return node;
+ const el=document.createElement(tag);
+ if(css)el.className=css;
+ if(text!==undefined)el.textContent=text;
+ return el;
 }
-function renderSummary(state){
-  const label=state==="risk"?bilingual("POTENTIAL RISK","위험 신호"):state==="checked"?bilingual("NOT FLAGGED","해당 신호 미감지"):bilingual("NOT VERIFIED","미확인");
-  return create("span","safety-chip safety-"+state,label);
+const translated=(en,ko)=>bilingual(en,ko);
+function makeTag(state){
+ const caption=state==="risk"?
+   translated("RISK SIGNAL","위험 신호"):state==="checked"?
+   translated("NOT FLAGGED","해당 신호 미감지"):translated("NOT REPORTED","미확인");
+ return create("span","safety-chip safety-"+state,caption);
 }
 const brief=(key,lang)=>{
  const ko={
- is_honeypot:"제공사 모델의 판정이며 실제 매도 가능성을 보증하지 않습니다.",
- transfer_pausable:"전송 중단 기능 감지입니다. 현재 관리자 권한 행사 가능 여부는 별도 확인해야 합니다.",
- is_blacklisted:"블랙리스트 기능 감지입니다. 현재 관리자가 사용할 수 있다는 의미는 아닙니다.",
- is_open_source:"미검증 소스의 다른 검사 결과는 누락될 수 있습니다.",
- is_proxy:"업그레이드 가능성은 실제 권한 구조에 따라 달라집니다.",
- is_mintable:"추가 발행 기능 감지와 현재 발행 권한 사용 가능성은 다릅니다.",
- mintable:"권한이 존재하는지에 대한 제공사 신호입니다.",
- freezable:"토큰 계정 동결이 가능할 수 있습니다."
+   is_honeypot:"제공사 판정이며 실제 매도 성공을 보증하지 않습니다.",
+   transfer_pausable:"코드 기능 탐지이며 현재 관리자 권한으로 행사 가능한지는 별도 검증이 필요합니다.",
+   is_blacklisted:"블랙리스트 관련 코드 탐지로, 현재 사용 가능한 권한인지는 별도 확인해야 합니다.",
+   is_open_source:"미검증 소스의 다른 위험 신호는 누락될 수 있습니다.",
+   is_proxy:"업그레이드 가능 여부는 실제 권한 구조에 따라 다릅니다.",
+   is_mintable:"추가 발행 코드 탐지와 현재 Mint 권한은 다릅니다.",
+   mintable:"제공사가 탐지한 권한 신호이며 실제 권한 검증 결과는 아닙니다.",
+   freezable:"일부 계정의 토큰이 동결될 수 있습니다."
  };
  const en={
- is_honeypot:"Provider signal only; successful selling is never guaranteed.",
- transfer_pausable:"Capability signal; present-day admin control requires a separate check.",
- is_blacklisted:"Blacklist code signal does not prove currently usable permissions.",
- is_open_source:"Missing verified source may make other checks unavailable.",
- is_proxy:"Actual upgrade powers depend on implementation and admin.",
- is_mintable:"Mint capability does not prove a currently usable mint authority.",
- mintable:"This is a reported authority signal, not an execution test.",
- freezable:"Some token accounts may be frozen."
+   is_honeypot:"Provider flag only, not a guarantee of successful selling.",
+   transfer_pausable:"Code-level capability; present-day admin authority requires verification.",
+   is_blacklisted:"Code-level blacklist signal; usable privileges remain unverified.",
+   is_open_source:"Unverified source may cause other risk checks to be missing.",
+   is_proxy:"Actual upgrade authority depends on the contract implementation.",
+   is_mintable:"Mintable code and currently usable mint authority are different.",
+   mintable:"Provider-reported ability, not independent authority verification.",
+   freezable:"Some token accounts may be frozen."
  };
  return (lang==="ko"?ko:en)[key]||"";
 };
+function isZeroAddress(value){
+ return typeof value==="string"&&/^0x0{40}$/i.test(value);
+}
 function initSafety(){
  const panel=document.getElementById("security-panel");
  if(!panel)return;
  const status=document.getElementById("security-status");
- const table=document.getElementById("security-checks");
+ const alertList=document.getElementById("security-alerts");
+ const checkedList=document.getElementById("security-checks");
+ const unknownList=document.getElementById("security-unknown-checks");
+ const checkedGroup=document.getElementById("security-checked-group");
+ const unknownGroup=document.getElementById("security-unknown-group");
+ const noAlert=document.getElementById("security-no-alerts");
+ const riskBrief=document.getElementById("security-risk-brief");
  const provider=document.getElementById("security-source");
+ const copyStatus=document.getElementById("security-copy-status");
  let requestId=0,last=null,abort=null;
  const lang=()=>document.documentElement.lang==="ko"?"ko":"en";
- function clear(){
-   requestId++;
-   if(abort){abort.abort();abort=null;}
-   last=null;panel.hidden=true;table.replaceChildren();
+ function reset(){
+  requestId++;
+  if(abort){abort.abort();abort=null;}
+  last=null;panel.hidden=true;
+  alertList.replaceChildren();checkedList.replaceChildren();unknownList.replaceChildren();
+  if(copyStatus)copyStatus.textContent="";
  }
- function showInfo(msg,state){
-   status.textContent=msg;
-   status.dataset.kind=state;
+ function showStatus(message,kind){status.textContent=message;status.dataset.kind=kind;}
+ function rowFor(check,locale){
+   const li=create("li","safety-row");
+   const left=create("div","safety-left");
+   left.append(create("span","safety-name",locale==="ko"?check.ko:check.en));
+   const explanation=brief(check.key,locale);
+   if(explanation)left.append(create("small","",explanation));
+   const right=create("div","safety-right");
+   if((check.key==="buy_tax"||check.key==="sell_tax")&&check.value!==null){
+     right.append(create("strong","safety-value",check.value.toFixed(2)+"%"));
+   }
+   right.append(makeTag(check.state));
+   li.append(left,right);
+   return li;
+ }
+ function renderAddress(id,address,chain){
+   const container=document.getElementById(id);
+   if(!container)return;
+   container.replaceChildren();
+   const url=explorerAddressUrl(chain,address);
+   if(!url){container.append(create("span","safety-address-empty","—"));return;}
+   const anchor=create("a","safety-address-link",compactAddress(address)+" ↗");
+   anchor.href=url;anchor.target="_blank";anchor.rel="noopener noreferrer";
+   anchor.title=address;anchor.setAttribute("aria-label",address+" — "+translated("open block explorer","블록 탐색기 열기"));
+   const btn=create("button","safety-copy",translated("Copy","복사"));
+   btn.type="button";btn.dataset.address=address;btn.setAttribute("aria-label",translated("Copy full address","주소 전체 복사")+" "+address);
+   container.append(anchor,btn);
  }
  function render(){
-   if(!last)return;
-   const result=last.report;
-   const currentLang=lang();
-   textOr("security-risk-count",String(result.risk));
-   textOr("security-unknown-count",String(result.unknown));
-   textOr("security-checked-count",String(result.checked));
-   textOr("security-holder-percent",result.holder.pct===null?"—":result.holder.pct.toFixed(1)+"%");
-   textOr("security-owner",result.owner||"—");
-   textOr("security-creator",result.creator||"—");
-   textOr("security-holder-count",result.holderCount===null?"—":result.holderCount.toLocaleString("en-US"));
-   textOr("security-holder-explain",result.holder.count===0?
-     bilingual("No usable top-holder data reported.","활용 가능한 상위 홀더 정보가 제공되지 않았습니다."):
-     bilingual("Sum of "+result.holder.count+" reported top-holder shares; includes possible pools/lockers/exchanges. NOT developer ownership.","제공된 상위 "+result.holder.count+"개 지갑 비율 합계입니다. LP·락커·거래소 등이 포함될 수 있으며 개발팀 보유량이 아닙니다."));
-   textOr("security-timestamp",new Date(last.time).toISOString().replace("T"," ").replace(/\.\d+Z/," UTC"));
-   table.replaceChildren();
-   for(const check of result.checks){
-     const item=create("li","safety-row");
-     const title=create("span","safety-name",currentLang==="ko"?check.ko:check.en);
-     const detail=brief(check.key,currentLang);
-     const left=create("div","safety-left");left.append(title);
-     if(detail)left.append(create("small","",detail));
-     const right=create("div","safety-right");
-     if(check.key==="buy_tax"||check.key==="sell_tax"){
-       if(check.value!==null)right.append(create("strong","safety-value",check.value.toFixed(2)+"%"));
-     }
-     right.append(renderSummary(check.state));
-     item.append(left,right);table.append(item);
-   }
-   showInfo(
-     bilingual("GoPlus signals received. This is not a verified safety verdict.","GoPlus의 위험 신호를 조회했습니다. 안전 판정을 의미하지 않습니다."),
-     "complete"
-   );
+  if(!last)return;
+  const {report,chain}=last;
+  const locale=lang();
+  textOr("security-risk-count",String(report.risk));
+  textOr("security-checked-count",String(report.checked));
+  textOr("security-unknown-count",String(report.unknown));
+  textOr("security-scope-note",coverageDescription(report,locale));
+  const flags=report.checks.filter(x=>x.state==="risk");
+  const neutral=report.checks.filter(x=>x.state==="checked");
+  const unknown=report.checks.filter(x=>x.state==="unknown");
+  alertList.replaceChildren(...flags.map(c=>rowFor(c,locale)));
+  checkedList.replaceChildren(...neutral.map(c=>rowFor(c,locale)));
+  unknownList.replaceChildren(...unknown.map(c=>rowFor(c,locale)));
+  noAlert.hidden=flags.length!==0;
+  checkedGroup.hidden=neutral.length===0;
+  unknownGroup.hidden=unknown.length===0;
+  textOr("security-checked-label",translated("View "+neutral.length+" not-flagged checks","해당 신호 미감지 "+neutral.length+"개 자세히"));
+  textOr("security-unknown-label",translated("View "+unknown.length+" unreported checks","미확인 "+unknown.length+"개 자세히"));
+  riskBrief.textContent=flags.length===0?
+   translated("No flags in the reported checks. This is not a safety certificate.","제공사 검사에서 감지된 신호가 없습니다. 안전 인증을 의미하지 않습니다."):
+   translated("Detected: "+flags.map(x=>x.en).slice(0,3).join(", ")+(flags.length>3?" and "+(flags.length-3)+" more":"")+". Current exploitability is not confirmed.",
+      "감지: "+flags.map(x=>x.ko).slice(0,3).join(", ")+(flags.length>3?" 외 "+(flags.length-3)+"건":"")+". 현재 행사 가능한 권한인지는 확인되지 않았습니다.");
+  textOr("security-holder-percent",report.holder.pct===null?"—":report.holder.pct.toFixed(1)+"%");
+  textOr("security-holder-count",report.holderCount===null?"—":report.holderCount.toLocaleString("en-US"));
+  textOr("security-holder-explain",report.holder.count===0?
+     translated("Provider did not return usable top-holder data.","제공된 상위 홀더 자료를 확인할 수 없습니다."):
+     translated("Sum of "+report.holder.count+" reported top-holder holdings; pools, exchanges, lockers may be included. NOT team ownership.",
+     "제공된 상위 "+report.holder.count+"개 지갑 비율의 합입니다. 풀·거래소·락커 등이 섞일 수 있으며 개발팀 보유량이 아닙니다."));
+  renderAddress("security-owner",report.owner,chain);
+  renderAddress("security-creator",report.creator,chain);
+  textOr("security-admin-brief",
+    isZeroAddress(report.owner)?
+    translated("Reported owner is the zero address. It may indicate renounced ownership, but detected functions and alternative admin pathways still need verification.",
+      "제공사상 소유자가 0 주소로 표시됩니다. 소유권 포기를 시사할 수 있지만 감지된 기능과 다른 관리자 경로는 추가 확인이 필요합니다."):
+    translated("Owner/creator addresses are provider-reported, not proof of who currently controls detected functions.",
+      "소유자·생성자 주소는 제공사 정보이며, 감지된 기능의 현재 통제 권한을 증명하지 않습니다."));
+  textOr("security-timestamp",new Date(last.time).toISOString().replace("T"," ").replace(/\.\d+Z/," UTC"));
+  showStatus(translated("GoPlus signals loaded. There is no global SAFE verdict.","GoPlus 조회 완료. 전체 안전 판정은 제공하지 않습니다."),"complete");
  }
  async function scan({chain,address}){
-   clear();
-   panel.hidden=false;
-   if(!Object.hasOwn(CODES,chain)){
-     showInfo(bilingual("Security provider does not support this chain.","보안 제공사가 이 체인을 지원하지 않습니다."),"unknown");return;
-   }
-   const thisId=requestId;
-   const controller=new AbortController();abort=controller;
-   showInfo(bilingual("Checking reported contract and holder risk signals…","컨트랙트·홀더 위험 신호를 조회 중입니다…"),"pending");
-   const url=providerEndpoint(chain,address);
-   provider.href=url;
-   const timeout=setTimeout(()=>controller.abort(),13000);
-   try{
-     const response=await fetch(url,{signal:controller.signal,headers:{Accept:"application/json"},cache:"no-store"});
-     if(!response.ok)throw new Error(response.status===429?"RATE_LIMIT":"HTTP_"+response.status);
-     const json=await response.json();
-     if(thisId!==requestId)return;
-     const token=extractToken(json,chain,address);
-     if(!token){showInfo(bilingual("No security record returned for this token; no conclusion can be drawn.","이 토큰의 보안 분석 기록이 제공되지 않았습니다. 안전 여부를 판단할 수 없습니다."),"unknown");return;}
-     const report=evaluateSecurity(token,chain);
-     last={report,time:Date.now()};
-     render();
-   }catch(err){
-     if(thisId!==requestId)return;
-     let message=bilingual("Security data unavailable (network, CORS or provider issue). No safety conclusion.","보안 데이터 조회 실패(CORS·네트워크·제공사 문제). 안전 여부는 미확인입니다.");
-     if(err?.message==="RATE_LIMIT")message=bilingual("Security provider rate limit exceeded. Try again later.","보안 API 호출 제한에 도달했습니다. 잠시 뒤 다시 시도하세요.");
-     if(err?.name==="AbortError")message=bilingual("Security lookup timed out. Please try again.","보안 데이터 조회가 시간 초과되었습니다. 다시 시도하세요.");
-     showInfo(message,"unknown");
-   }finally{clearTimeout(timeout);if(thisId===requestId)abort=null;}
+  reset();panel.hidden=false;
+  if(!Object.hasOwn(CODES,chain)){
+   showStatus(translated("Chain unsupported; security unknown.","미지원 체인으로 보안 상태는 미확인입니다."),"unknown");return;
+  }
+  const id=requestId;
+  const controller=new AbortController();abort=controller;
+  showStatus(translated("Checking GoPlus indicators…","GoPlus 위험 신호를 조회하고 있습니다…"),"pending");
+  const url=providerEndpoint(chain,address);provider.href=url;
+  const timeout=setTimeout(()=>controller.abort(),13000);
+  try{
+   const resp=await fetch(url,{signal:controller.signal,headers:{Accept:"application/json"},cache:"no-store"});
+   if(!resp.ok)throw new Error(resp.status===429?"RATE_LIMIT":"HTTP_"+resp.status);
+   const data=await resp.json();if(id!==requestId)return;
+   const token=extractToken(data,chain,address);
+   if(!token){showStatus(translated("No provider record. Token safety is unknown.","제공된 보안 분석 결과가 없어 안전 여부는 미확인입니다."),"unknown");return;}
+   last={report:evaluateSecurity(token,chain),time:Date.now(),chain};
+   render();
+  }catch(err){
+   if(id!==requestId)return;
+   let message=translated("Provider unavailable (network/CORS/error). Safety is unknown.","GoPlus 조회 실패(네트워크·CORS·제공사 오류). 안전 상태는 미확인입니다.");
+   if(err?.message==="RATE_LIMIT")message=translated("Provider rate limit reached. Please retry later.","GoPlus 요청 한도에 도달했습니다. 나중에 다시 시도하세요.");
+   if(err?.name==="AbortError")message=translated("GoPlus request timed out. Safety is unknown.","GoPlus 조회 시간 초과. 안전 여부는 미확인입니다.");
+   showStatus(message,"unknown");
+  }finally{clearTimeout(timeout);if(id===requestId)abort=null;}
  }
- window.addEventListener("yorbi:scanstart",clear);
- window.addEventListener("yorbi:scanresult",event=>{
-   if(event.detail?.chain&&event.detail?.address)scan(event.detail);
+ panel.addEventListener("click",async e=>{
+  const button=e.target.closest("button.safety-copy");
+  if(!button||!panel.contains(button))return;
+  const address=button.dataset.address;
+  if(!address)return;
+  try{
+   if(!navigator.clipboard?.writeText)throw new Error("Clipboard API unsupported");
+   await navigator.clipboard.writeText(address);
+   if(copyStatus)copyStatus.textContent=translated("Full wallet address copied.","지갑 주소 전체를 복사했습니다.");
+  }catch(_){
+   if(copyStatus)copyStatus.textContent=translated("Clipboard unavailable; open the explorer link to copy the full address.","복사 기능을 사용할 수 없습니다. 탐색기 링크에서 주소를 복사하세요.");
+  }
  });
+ window.addEventListener("yorbi:scanstart",reset);
+ window.addEventListener("yorbi:scanresult",e=>{if(e.detail?.chain&&e.detail?.address)scan(e.detail);});
  window.addEventListener("yorbi:languagechange",()=>{if(last)render();});
 }
 if(typeof document!=="undefined"){

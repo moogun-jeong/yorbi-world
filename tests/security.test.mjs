@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {booleanSignal,taxRate,providerEndpoint,extractToken,topHolderConcentration,evaluateSecurity} from "../assets/security.mjs";
+import {booleanSignal,taxRate,providerEndpoint,extractToken,topHolderConcentration,evaluateSecurity,compactAddress,explorerAddressUrl,coverageDescription} from "../assets/security.mjs";
 const PEPE="0x6982508145454ce325ddbe47a25d4ec3d2311933";
 test("tri-state security flags: explicit zero is not unknown",()=>{
  assert.equal(booleanSignal("1"),true);
@@ -77,4 +77,45 @@ test("no provider fields yields unknown, never SAFE",()=>{
  assert.equal(report.risk,0);
  assert.equal(report.checked,0);
  assert.ok(report.unknown>=10);
+});
+
+
+test("wallet display shortens but never overwrites the on-chain address",()=>{
+ const raw="0x1234567890123456789012345678901234567890";
+ assert.equal(compactAddress(raw),"0x123456…567890");
+ assert.equal(compactAddress(""),"—");
+ assert.equal(compactAddress("<script>alert(1)</script>"),"—");
+});
+test("only validated explorer hosts and chain/address matches generate links",()=>{
+ const raw="0x1234567890123456789012345678901234567890";
+ assert.equal(explorerAddressUrl("ethereum",raw),"https://etherscan.io/address/"+raw);
+ assert.equal(explorerAddressUrl("bsc",raw),"https://bscscan.com/address/"+raw);
+ assert.equal(explorerAddressUrl("base",raw),"https://basescan.org/address/"+raw);
+ assert.equal(explorerAddressUrl("solana",raw),null);
+ assert.equal(explorerAddressUrl("ethereum","So11111111111111111111111111111111111111112"),null);
+ assert.equal(explorerAddressUrl("evil",raw),null);
+ assert.equal(explorerAddressUrl("ethereum","0x<script>"),null);
+});
+test("Solana wallet links remain on Solscan and do not use EVM explorers",()=>{
+ const raw="So11111111111111111111111111111111111111112";
+ assert.equal(explorerAddressUrl("solana",raw),"https://solscan.io/account/"+raw);
+ assert.match(compactAddress(raw),/^So1111…111112$/);
+});
+test("zero unknown means zero unknown provider fields, not verified token safety",()=>{
+ const report=evaluateSecurity({is_honeypot:"0",is_mintable:"0"},"ethereum");
+ const ko=coverageDescription(report,"ko");
+ assert.match(ko,/GoPlus 제공 검사/);
+ assert.match(ko,/LP 잠금/);
+ assert.match(coverageDescription(report,"en"),/outside this count/);
+ assert.equal(report.lpLock,"unknown");
+});
+test("provider alerts are prioritized without incorrectly asserting current authority",()=>{
+ const report=evaluateSecurity({
+   is_honeypot:"0",transfer_pausable:"1",is_blacklisted:"1",
+   owner_address:"0x0000000000000000000000000000000000000000"
+ },"ethereum");
+ assert.equal(report.risk,2);
+ assert.equal(report.checks.filter(c=>c.state==="risk").length,2);
+ assert.equal(report.owner,"0x0000000000000000000000000000000000000000");
+ assert.equal(report.lpLock,"unknown");
 });
