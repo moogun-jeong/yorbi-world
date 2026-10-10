@@ -53,6 +53,16 @@ Cloudflare guide: https://developers.cloudflare.com/pages/configuration/git-inte
 - English / Korean language selection is saved in localStorage when available; static roadmap and other missing UI captions are translated.
 - Source verification is distinct from live mobile-browser and X social-crawler tests; confirm public behavior after auto deployment.
 
+## Sprint B + C — Public credibility and visual polish (October 10, 2026)
+
+- Proof Center now separates **LIVE** website, **NOT ISSUED** token, and **PLANNED / NOT LIVE** Explorer and AI talks.
+- Official X, public GitHub change history, no-presale/no-airdrop warning, and explicit revision date in the footer.
+- Roadmap marks Genesis as a publicly available **site** (not a fully complete community rollout); future items are marked not live.
+- Added a lightweight YORBI orbit brand favicon (`assets/favicon.svg`).
+- Increased mobile readability, text spacing, accessibility, hover details; animation honors reduced-motion preferences.
+- Preserved original YORBI artwork, bilingual controls, no paid infrastructure, and the exact published X and Workers URLs.
+- The X account's **Website** field must be linked manually by the owner; we do not modify or publish X posts in this sprint.
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.
