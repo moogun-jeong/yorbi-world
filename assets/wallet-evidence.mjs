@@ -115,9 +115,10 @@ function initDeep(){
  const button=document.getElementById("tracker-deep-run"),status=document.getElementById("tracker-deep-status");
  const trades=document.getElementById("tracker-deep-events"),funding=document.getElementById("tracker-deep-funding");
  const metadata=document.getElementById("tracker-deep-scope");
+ const resultsArea=section.querySelector(".tracker-deep-results");
  let context=null,output=null,busy=false,job=0;
  const msg=(a,state="info")=>{status.textContent=a;status.dataset.kind=state};
- function reset(){job++;context=null;output=null;busy=false;button.disabled=false;section.hidden=true;trades.replaceChildren();funding.replaceChildren();}
+ function reset(){job++;context=null;output=null;busy=false;button.disabled=false;section.hidden=true;resultsArea.hidden=true;trades.replaceChildren();funding.replaceChildren();}
  function row(e,chain){
   const div=create("div","tracker-deep-event");
   const kind={
@@ -136,6 +137,7 @@ function initDeep(){
  }
  function render(){
   if(!context||!output)return;
+  resultsArea.hidden=false;
   const {chain}=context;
   trades.replaceChildren();
   if(output.events.length){for(const e of output.events)trades.append(row(e,chain));}
