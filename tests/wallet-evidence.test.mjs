@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {evidenceUrl,nativeUrl,txExplorer,dedupeEvidenceSources,classifySwapEvidence,directNativeFunding,SWAP_TOPICS,swapEventEvidence,explainEvidenceReason,nextEvidencePageUrl}
+import {evidenceUrl,nativeUrl,txExplorer,dedupeEvidenceSources,classifySwapEvidence,directNativeFunding,SWAP_TOPICS,swapEventEvidence,explainEvidenceReason,nextEvidencePageUrl,innerTraceUrl,inspectNativeSettlement,creatorInitiatedNativeTraces,loadTraceSample}
  from "../assets/wallet-evidence.mjs";
 const token="0x6982508145454ce325ddbe47a25d4ec3d2311933";
 const quote="0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -8,7 +8,7 @@ const trader="0x1234567890123456789012345678901234567890";
 const router="0x5555555555555555555555555555555555555555";
 const creator="0x4444444444444444444444444444444444444444";
 const hash="0x"+"a".repeat(64);
-const receipt=(method="swapExactTokensForTokens",result="success")=>({hash,result,method});
+const receipt=(method="swapExactTokensForTokens",result="success")=>({hash,result,method,from:{hash:trader}});
 const move=(asset,from,to,value,decimals="18",symbol="TEST")=>({
  from:{hash:from},to:{hash:to},
  token:{address_hash:asset,symbol,decimals},total:{decimals,value}
@@ -161,4 +161,115 @@ test("incomplete transfer list remains unknown even if method claims swap",()=>{
  const result=classifySwapEvidence(receipt("swapExactTokensForTokens"),flow,trader,token,{complete:false,swapEvent:swapEventEvidence([{topics:[SWAP_TOPICS.v3],address:{hash:router}}])});
  assert.equal(result.kind,"unverified");
  assert.equal(result.reason,"incomplete_logs");
+});
+
+
+test("ETH execution URL is chain restricted and transaction scoped",()=>{
+ assert.equal(innerTraceUrl("ethereum",hash),"https://eth.blockscout.com/api/v2/transactions/"+hash+"/internal-transactions");
+ assert.equal(innerTraceUrl("base",hash),"https://base.blockscout.com/api/v2/transactions/"+hash+"/internal-transactions");
+ assert.equal(innerTraceUrl("bsc",hash),null);
+ assert.equal(innerTraceUrl("ethereum","javascript:"),null);
+});
+test("native ETH value with token receipt is contextual, never proven swap",()=>{
+ const tx={...receipt("execute"),from:{hash:trader},to:{hash:router,is_contract:true},value:qty(2)};
+ const erc=[move(token,router,trader,qty(400))];
+ const assessment=inspectNativeSettlement(tx,erc,[],trader,token,{complete:true});
+ assert.equal(assessment.kind,"native_payment_context");
+ assert.equal(assessment.direction,"receive");
+ assert.equal(assessment.events[0].amount,2);
+ assert.equal(assessment.events[0].source,"outer_tx_value");
+ assert.equal(assessment.contractTarget,true);
+});
+test("internal ETH returned to wallet is contextual for token spend, not proven sell",()=>{
+ const tx={...receipt("execute"),from:{hash:trader},to:{hash:router,is_contract:true},value:"0"};
+ const transfers=[move(token,trader,router,qty(300))];
+ const traces=[{transaction_hash:hash,from:{hash:router},to:{hash:trader},value:qty(1),success:true,type:"call"}];
+ tx.hash=hash;
+ const result=inspectNativeSettlement(tx,transfers,traces,trader,token);
+ assert.equal(result.kind,"native_payment_context");
+ assert.equal(result.direction,"send");
+ assert.equal(result.events[0].amount,1);
+});
+test("zero ETH, reverted internal calls and other wallet traces never create false settlement",()=>{
+ const tx={...receipt("execute"),from:{hash:trader},to:{hash:router,is_contract:true},value:"0"};
+ const erc=[move(token,router,trader,qty(100))];
+ const traces=[
+ {transaction_hash:hash,from:{hash:trader},to:{hash:router},value:qty(1),success:false},
+ {transaction_hash:"0x"+"b".repeat(64),from:{hash:trader},to:{hash:router},value:qty(1),success:true},
+ {transaction_hash:hash,from:{hash:creator},to:{hash:router},value:qty(1),success:true}
+ ];
+ assert.equal(inspectNativeSettlement(tx,erc,traces,trader,token).kind,"no_native_counterflow");
+ assert.equal(inspectNativeSettlement(tx,erc,traces,trader,token,{complete:false}).reason,"partial_internal_traces");
+});
+test("bad token amount, missing token logs, failed transaction retain uncertainty",()=>{
+ const tx={...receipt("execute"),from:{hash:trader},to:{hash:router},value:qty(2)};
+ assert.equal(inspectNativeSettlement(tx,null,[],trader,token).kind,"unverified");
+ assert.equal(inspectNativeSettlement({...tx,result:"error"},[move(token,router,trader,qty(100))],[],trader,token).kind,"unverified");
+ assert.equal(inspectNativeSettlement(tx,[move(token,router,trader,"foo")],[],trader,token).reason,"invalid_amount");
+});
+test("creator-initiated contract-funded wallet ETH is attributed to initiator, not ownership",()=>{
+ const tx={hash,from:{hash:creator},to:{hash:router,is_contract:true},result:"success"};
+ const calls=[{transaction_hash:hash,index:3,from:{hash:router},to:{hash:trader},value:qty(3),success:true,type:"call"}];
+ const report=creatorInitiatedNativeTraces(tx,{items:calls,next_page_params:null},creator,[trader],"ethereum");
+ assert.equal(report.hits.length,1);
+ assert.equal(report.hits[0].kind,"creator_initiated_via_contract");
+ assert.equal(report.hits[0].amount,3);
+ assert.equal(report.complete,true);
+});
+test("creator-originated ETH internal send is distinguished from contract-mediated send",()=>{
+ const tx={hash,from:{hash:creator},result:"success"};
+ const rows=[{transaction_hash:hash,index:1,from:{hash:creator},to:{hash:trader},value:qty(1),success:true}];
+ const result=creatorInitiatedNativeTraces(tx,{items:rows},creator,[trader],"base");
+ assert.equal(result.hits[0].kind,"direct_internal_sender");
+ assert.equal(result.hits[0].url,"https://base.blockscout.com/tx/"+hash);
+});
+test("creator funding rejects third-party initiated, failed, zero-value and wrong-tx entries",()=>{
+ const tx={hash,from:{hash:router},result:"success"};
+ const calls=[{transaction_hash:hash,index:1,from:{hash:creator},to:{hash:trader},value:qty(2),success:true}];
+ assert.equal(creatorInitiatedNativeTraces(tx,{items:calls},creator,[trader],"ethereum").hits.length,0);
+ const valid={...tx,from:{hash:creator}};
+ const bad=[
+ {...calls[0],success:false},
+ {...calls[0],index:2,value:"0"},
+ {...calls[0],index:3,transaction_hash:"0x"+"b".repeat(64)},
+ {...calls[0],index:4,to:{hash:router}}
+ ];
+ assert.equal(creatorInitiatedNativeTraces(valid,{items:bad},creator,[trader],"ethereum").hits.length,0);
+});
+test("trace page loader enforces strict two-page cap and reports incomplete without lying",async()=>{
+ const seen=[];
+ const response=async url=>{seen.push(url);
+  return {items:[{transaction_hash:hash}],next_page_params:{index:seen.length,block_number:900}};};
+ const base=innerTraceUrl("base",hash);
+ const result=await loadTraceSample(base,response,{pages:2});
+ assert.equal(result.pagesLoaded,2);
+ assert.equal(result.items.length,2);
+ assert.equal(result.complete,false);
+ assert.equal(seen.length,2);
+ assert.match(seen[1],/index=1/);
+});
+test("trace loader reports complete only when pagination ends",async()=>{
+ const sample=await loadTraceSample(innerTraceUrl("ethereum",hash),async()=>({items:[],next_page_params:null}));
+ assert.equal(sample.complete,true);
+ assert.equal(sample.pagesLoaded,1);
+ assert.equal(sample.items.length,0);
+});
+test("new native-flow reasons have readable Korean labels",()=>{
+ assert.match(explainEvidenceReason("partial_internal_traces","ko"),/누락/);
+ assert.match(explainEvidenceReason("native_payment_opposes_token_flow","ko"),/매매 확정 아님/);
+});
+
+test("swap method via another signer stays CONTEXT, not a confirmed watched-wallet trade",()=>{
+ const tx={...receipt("swapExactTokensForTokens"),from:{hash:creator}};
+ const flow=[move(token,router,trader,qty(200)),move(quote,trader,router,qty(100,6),"6","USDC")];
+ const result=classifySwapEvidence(tx,flow,trader,token);
+ assert.equal(result.kind,"swap_context_evidence");
+ assert.equal(result.reason,"shared_router_not_initiator");
+ assert.match(explainEvidenceReason(result.reason,"ko"),/직접 시작하지 않음/);
+});
+test("swap method with absent origin also stays contextual rather than presumptively direct",()=>{
+ const tx={...receipt("swapExactTokensForTokens")};
+ delete tx.from;
+ const flow=[move(token,router,trader,qty(200)),move(quote,trader,router,qty(100,6),"6","USDC")];
+ assert.equal(classifySwapEvidence(tx,flow,trader,token).kind,"swap_context_evidence");
 });

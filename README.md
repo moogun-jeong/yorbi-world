@@ -204,6 +204,27 @@ Manual verification: scan PEPE Ethereum, inspect a holder's raw transaction. An 
 Mobile verification: after PEPE Explorer/Safety Scan/Wallet Radar, click the separate evidence-review button. Ordinary token `transfer()` should read "토큰 전송: 매매 미확인", unclassified transactions must show Korean reasons rather than raw internal codes, and events without sufficient proof remain labeled as context or unknown. Try an over-100-log batch, Ethereum/Base and unsupported chains. Verify links and language toggle; do not call a transaction verified solely on the presence of a `Swap` event.
 
 
+## Sprint 6.3 — bounded router/native ETH trace and creator funding evidence (2026-10-11)
+
+**Status:** An opt-in forensic *sample* in the existing Wallet Radar deep-review panel. Ethereum/Base only, no new service plan, server, database, API key, automation or GitHub Actions.
+
+- Per explicit deep-scan click, inspect up to **six** watched-address/token transactions. For **at most three of those** with complete token transfer data, retrieve up to **two pages** of Blockscout `/api/v2/transactions/{hash}/internal-transactions` trace records. Consider only successful value-bearing traces with a matching originating transaction hash.
+- A watched wallet receiving the tracked token and sending native ETH in the **same successful outer transaction**, or sending tracked token and receiving a native ETH internal call, is reported as **native settlement context**. ETH traces do not prove a DEX buy/sell or its actual economic owner. The outer `tx.value` is considered only if the watched address originated that transaction. A contract recipient is labeled "outer call to contract", not an identified DEX router.
+- For the reported token creator, inspect its first page of outer transactions and optionally the internal traces for **at most the first three successful, creator-originated transactions** (up to two pages each). Show any positive ETH internal transfer to the watched wallets as either **creator directly sent ETH** or **creator-initiated transaction led to contract-mediated ETH receipt**. The latter is a *transaction/provenance relation*, **not a direct creator-to-holder transfer, same-owner proof, insider collusion or multi-hop wallet cluster**.
+- Suppress duplicate trace records corresponding to an already listed direct outer ETH transfer when possible. Avoid inventing balances, routing profit, full funding histories, or exact trade counts from sampling. If the provider times out, has incomplete pagination, or omits traces, state **unknown/incomplete**.
+- Sprint 6.2's swap-call attribution is tightened: to label a watched wallet's stronger swap-trade evidence, require **the wallet to be the successful outer transaction initiator**, plus an explicit recognized swap method and opposing ERC-20 movement. If an external router/bundler initiated the outer transaction, downgrade to **swap context**, not a verified buy/sell. Token transfers alone never prove buying or selling.
+- Visible status advances during slow bounded trace lookup; raw transaction links remain available; English/Korean explanations are retained and the UI shows an extra contract-mediated funding sample.
+- Non-goals: arbitrary router ABI recursion, fee-escrow provenance, complete internal call tree of all addresses, EIP-7702/4337 bundles, Uniswap v4-specific decoding, 24-hour trade statistics, CEX wallet affiliation, chain-wide related wallets, holder beneficial ownership, profit calculations or trustless liquidation tests.
+- User browser directly calls the public **Blockscout REST v2** on demand. External providers see requested chain/address and network request metadata. No user search history is stored by the YORBI frontend. Free tiers / CORS / latency can limit access.
+- **No GitHub Actions workflows are introduced**. Cloudflare Workers Builds remains the repository-connected deployment mechanism.
+
+### Validation
+
+`node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs`
+
+Mobile smoke test: scan PEPE (Ethereum), run Wallet Radar, then deep transaction review. Check progress texts, existence of the "Creator-initiated ETH receipts through contracts" panel, inspect transaction links, verify generic token transfers are not labeled buys, and confirm a missing trace is **not** reported as "no ETH funding ever". The bounded sample may find no funding links; that is a valid result. Confirm Base and EN/KO, and inspect from an actual mobile browser before marking end-to-end proven.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

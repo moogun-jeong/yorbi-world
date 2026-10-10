@@ -32,6 +32,10 @@ export function explainEvidenceReason(reason,lang="en"){
  no_opposing_payment:["Matching ERC-20 payment in the opposite direction was not found","반대 방향 결제 토큰 이동을 확인하지 못함"],
  swap_method_and_opposing_erc20_flows:["Explicit swap call + opposite ERC-20 payment flows","명시적 스왑 호출 + 반대 방향 ERC-20 결제 토큰 이동"],
  swap_event_and_opposing_erc20_flows:["Swap event topic + opposite token flows; wallet execution not proven","DEX형 Swap 이벤트 + 반대 방향 토큰 이동 (지갑의 실제 매매는 미확정)"],
+ shared_router_not_initiator:["Swap method and payment flow appear, but the watched wallet did not initiate the outer transaction","스왑 호출과 토큰 이동이 확인되지만 추적 지갑이 해당 거래를 직접 시작하지 않음"],
+ no_native_counterflow:["No matching native ETH payment found in this transaction sample","해당 거래 표본에서 반대 방향 ETH 결제 흐름을 찾지 못함"],
+ partial_internal_traces:["Trace pages incomplete; no conclusion about ETH movement","내부 ETH 거래 내역이 일부 누락되어 결론을 내릴 수 없음"],
+ native_payment_opposes_token_flow:["Token transfer and opposite native ETH flow share a transaction; trade not proven","동일 거래에서 토큰 이동과 반대 방향 ETH 흐름 확인 (매매 확정 아님)"],
  explorer_unavailable:["Transaction details unavailable from explorer","블록 탐색기에서 거래 상세 정보를 가져오지 못함"]
  };
  const entry=phrases[reason];
@@ -125,15 +129,111 @@ export function classifySwapEvidence(tx,transfers,wallet,trackedToken,{complete=
   quoteAmount+=v;quotes++;quoteToken=t.token?.symbol||"quote token";
  }
  if(!quotes)return {kind:"unverified",reason:"no_opposing_payment",target};
- if(!hasSwapMethod){
+ // Explicit method on a shared router is not evidence that every receiving wallet initiated that swap.
+ // Only elevate to a stronger classification when the watched wallet is the actual outer tx signer.
+ if(!hasSwapMethod||key(tx.from?.hash)!==key(wallet)){
    return {kind:"swap_context_evidence",direction:receive?"receive":"send",
-     reason:"swap_event_and_opposing_erc20_flows",target,
-     pools:swapEvent.pools,quoteToken:quotes===1?quoteToken:"multiple tokens",quoteAmount:quotes===1?quoteAmount:null};
+     reason:hasSwapMethod?"shared_router_not_initiator":"swap_event_and_opposing_erc20_flows",target,
+     pools:swapEvent?.pools||[],quoteToken:quotes===1?quoteToken:"multiple tokens",quoteAmount:quotes===1?quoteAmount:null};
  }
  return {kind:receive?"swap_buy_evidence":"swap_sell_evidence",
   reason:"swap_method_and_opposing_erc20_flows",target,
   quoteToken:quotes===1?quoteToken:"multiple tokens",quoteAmount:quotes===1?quoteAmount:null};
 }
+
+/** Bounded Blockscout execution trace evidence: NOT transaction attribution or ownership. */
+export function innerTraceUrl(chain,hash){
+ const host=EVM_EXPLORERS[chain];
+ return host&&isHash(hash)?host+"/api/v2/transactions/"+hash+"/internal-transactions":null;
+}
+function positiveEth(wei){
+ if(typeof wei!=="string"||!/^\d+$/.test(wei))return null;
+ try{
+  const n=BigInt(wei);
+  return n>0n?Number(n)/1e18:0;
+ }catch(_){return null;}
+}
+export function inspectNativeSettlement(tx,transfers,internal,wallet,token,{complete=true}={}){
+ if(!tx||!isHash(tx.hash)||!isAddress(wallet)||!isAddress(token))
+   return {kind:"unverified",reason:"bad_input"};
+ if(tx.result!=="success"||!Array.isArray(transfers))
+   return {kind:"unverified",reason:"failed_or_pending"};
+ const target=sumFlows(transfers,wallet,token);
+ if(target.unknownAmount)return {kind:"unverified",reason:"invalid_amount"};
+ const direction=target.in>target.out?"receive":target.out>target.in?"send":null;
+ if(!direction)return {kind:"unverified",reason:"no_net_target_flow"};
+ const walletKey=key(wallet);
+ const outerFrom=key(tx.from?.hash)===walletKey;
+ const outerTo=key(tx.to?.hash);
+ const contractTarget=Boolean(tx.to?.is_contract);
+ const outerEth=outerFrom?positiveEth(tx.value):null;
+ const outs=[],ins=[];
+ const all=Array.isArray(internal)?internal:[];
+ for(const t of all){
+  // Trace 'success' is Boolean; ignore reverted and non-value calls.
+  if(t?.success!==true||!isHash(t.transaction_hash)||key(t.transaction_hash)!==key(tx.hash))continue;
+  const value=positiveEth(t.value);
+  if(value===null||value<=0)continue;
+  if(key(t.from?.hash)===walletKey&&key(t.to?.hash)!==walletKey){
+   outs.push({to:t.to?.hash||null,amount:value,source:"internal_trace"});
+  }
+  if(key(t.to?.hash)===walletKey&&key(t.from?.hash)!==walletKey){
+   ins.push({from:t.from?.hash||null,amount:value,source:"internal_trace"});
+  }
+ }
+ const paid=outs.length>0||(outerEth!==null&&outerEth>0);
+ const received=ins.length>0;
+ const relevant=direction==="receive"?paid:received;
+ if(!relevant)return {kind:"no_native_counterflow",direction,
+  reason:complete?"no_native_counterflow":"partial_internal_traces",
+  inspected:all.length,complete,contractTarget,outerContract:contractTarget?tx.to.hash:null};
+ const flows=(direction==="receive"?outs:ins).slice(0,3);
+ if(direction==="receive"&&outerEth>0&&!outs.length)flows.unshift({to:tx.to?.hash||null,amount:outerEth,source:"outer_tx_value"});
+ return {kind:"native_payment_context",direction,reason:"native_payment_opposes_token_flow",
+  complete,inspected:all.length,contractTarget,
+  outerContract:contractTarget&&isAddress(outerTo)?tx.to.hash:null,
+  events:flows.slice(0,3)};
+}
+/** Initiator-to-holder native ETH trace: direct sender vs routed contract is explicitly separated.
+ *  A contract-intermediated payment is NOT proof the initiator owns the receiving wallet.
+ */
+export function creatorInitiatedNativeTraces(tx,tracePayload,creator,holderAddresses,chain){
+ if(!tx||tx.result!=="success"||key(tx.from?.hash)!==key(creator)||!isHash(tx.hash)||
+    !isAddress(creator)||!Array.isArray(holderAddresses)||!Array.isArray(tracePayload?.items))
+   return {hits:[],complete:false,inspected:0};
+ const targets=new Set(holderAddresses.filter(isAddress).map(key));
+ const seen=new Set(),hits=[];
+ for(const inner of tracePayload.items){
+  if(inner?.success!==true||key(inner.transaction_hash)!==key(tx.hash))continue;
+  if(!isAddress(inner.to?.hash)||!targets.has(key(inner.to.hash)))continue;
+  const amount=positiveEth(inner.value);
+  if(amount===null||amount<=0)continue;
+  const source=inner.from?.hash;
+  if(!isAddress(source))continue;
+  const kind=key(source)===key(creator)?"direct_internal_sender":"creator_initiated_via_contract";
+  const unique=[inner.transaction_hash,inner.index,source,inner.to.hash].join(":");
+  if(seen.has(unique))continue;seen.add(unique);
+  hits.push({hash:tx.hash,from:source,to:inner.to.hash,amount,kind,url:txExplorer(chain,tx.hash)});
+ }
+ return {hits:hits.slice(0,6),complete:!tracePayload.next_page_params,
+  inspected:tracePayload.items.length};
+}
+/** Small bounded pagination helper, retaining unknown rather than assuming completeness. */
+export async function loadTraceSample(base,reader,{pages=2}={}){
+ if(typeof reader!=="function"||typeof base!=="string"||pages<1||pages>2)return null;
+ let url=base,all=[],complete=false,pagesLoaded=0;
+ for(let page=0;page<pages;page++){
+  const response=await reader(url);
+  if(!Array.isArray(response?.items))return null;
+  all=all.concat(response.items);pagesLoaded++;
+  if(!response.next_page_params){complete=true;break;}
+  const next=nextEvidencePageUrl(base,response.next_page_params);
+  if(!next)break;
+  url=next;
+ }
+ return {items:all,complete,pagesLoaded};
+}
+
 export function directNativeFunding(payload,creator,watched,chain){
  if(!isAddress(creator)||!Array.isArray(watched)||!Array.isArray(payload?.items))return {items:[],sampled:0,more:false};
  const targets=new Set(watched.filter(isAddress).map(key)),seen=new Set(),hits=[];
@@ -167,10 +267,11 @@ function initDeep(){
  const button=document.getElementById("tracker-deep-run"),status=document.getElementById("tracker-deep-status");
  const trades=document.getElementById("tracker-deep-events"),funding=document.getElementById("tracker-deep-funding");
  const metadata=document.getElementById("tracker-deep-scope");
+ const internalFunding=document.getElementById("tracker-deep-inner-funding");
  const resultsArea=section.querySelector(".tracker-deep-results");
  let context=null,output=null,busy=false,job=0;
  const msg=(a,state="info")=>{status.textContent=a;status.dataset.kind=state};
- function reset(){job++;context=null;output=null;busy=false;button.disabled=false;section.hidden=true;resultsArea.hidden=true;trades.replaceChildren();funding.replaceChildren();}
+ function reset(){job++;context=null;output=null;busy=false;button.disabled=false;section.hidden=true;resultsArea.hidden=true;trades.replaceChildren();funding.replaceChildren();internalFunding?.replaceChildren();}
  function row(e,chain){
   const div=create("div","tracker-deep-event");
   const kind={
@@ -180,11 +281,26 @@ function initDeep(){
     transfer:["Token transfer; trade unproven","토큰 전송: 매매 미확인"],
     unverified:["Unable to classify","거래 성격 판정 불가"]
   }[e.verdict.kind]||["Unable to classify","거래 성격 판정 불가"];
-  div.append(create("strong","",labels(...kind)));
+  const native=e.native;
+  const nativeFocus=native?.kind==="native_payment_context";
+  if(nativeFocus&&e.verdict.kind==="transfer")
+   div.append(create("strong","",labels("Token transfer + ETH settlement context (trade unproven)","토큰 이동 + ETH 결제 정황 (매매 미확정)")));
+  else div.append(create("strong","",labels(...kind)));
   div.append(create("span","",e.wallet.slice(0,8)+"…"+e.wallet.slice(-6)));
   if(e.verdict.quoteToken&&e.verdict.quoteAmount!==null)
    div.append(create("small","",labels("Opposing payment: ","반대 방향 결제 토큰: ")+e.verdict.quoteToken+" ~"+e.verdict.quoteAmount.toLocaleString("en-US",{maximumSignificantDigits:5})));
   div.append(create("small","",labels("Why: ","판정 근거: ")+explainEvidenceReason(e.verdict.reason,document.documentElement.lang)));
+  if(nativeFocus){
+   const flow=native.events?.[0];
+   const amount=flow?.amount===null||flow?.amount===undefined?"":flow.amount.toLocaleString("en-US",{maximumSignificantDigits:7})+" ETH";
+   div.append(create("small","tracker-native-note",labels("Same transaction: ","동일 거래: ")+
+     (native.direction==="receive"?labels("token received + ETH sent","토큰 수령 + ETH 지출"):labels("token sent + ETH received","토큰 지출 + ETH 수령"))+
+     (amount?" · "+amount:"")+" · "+labels("not verified as a swap","스왑 확정 아님")));
+  }else if(native?.reason==="partial_internal_traces"){
+   div.append(create("small","tracker-native-note",explainEvidenceReason(native.reason,document.documentElement.lang)));
+  }
+  if(native?.contractTarget&&native.outerContract)
+    div.append(create("small","",labels("Outer call to contract: ","외부 호출 대상 컨트랙트: ")+native.outerContract.slice(0,8)+"…"+native.outerContract.slice(-6)));
   if(e.verdict.pools?.length)div.append(create("small","",labels("Swap event emitted by: ","Swap 이벤트 발생 주소: ")+e.verdict.pools.map(x=>x.slice(0,8)+"…"+x.slice(-6)).join(", ")));
   div.append(evidenceLink(chain,e.hash));
   return div;
@@ -207,9 +323,30 @@ function initDeep(){
    }
    else funding.append(create("p","tracker-mini",labels("No direct outgoing native-coin transfer was observed in this first creator transaction page; older or internal transfers were not inspected.","생성자 최근 일반 거래 첫 페이지에서 추적 지갑으로 직접 전송한 네이티브 코인이 발견되지 않았습니다. 이전 페이지와 내부 전송은 미조사입니다.")));
   }else funding.append(create("p","tracker-mini",labels("Creator not identified, or native transactions could not be retrieved.","생성자 미확인 또는 네이티브 코인 전송 내역 조회 실패.")));
+  if(internalFunding){
+    internalFunding.replaceChildren();
+    const inner=output.innerFunding;
+    if(!inner){
+      internalFunding.append(create("p","tracker-mini",labels("Internal ETH funding sample unavailable or creator not identified.","내부 ETH 자금 연결 표본 미조회 또는 생성자 미확인.")));
+    }else if(inner.hits.length===0){
+      internalFunding.append(create("p","tracker-mini",labels(
+       "No creator-initiated ETH receipt by watched holders in "+inner.checked+" inspected transactions. Older or unexamined transfers may exist.",
+       "검사한 생성자 거래 "+inner.checked+"건에서 추적 홀더가 ETH를 받은 내역은 발견되지 않았습니다. 이전·미조사 거래는 알 수 없습니다.")));
+    }else{
+      for(const hit of inner.hits.slice(0,8)){
+       const div=create("div","tracker-deep-event");
+       div.append(create("strong","",hit.kind==="direct_internal_sender"?
+         labels("Creator directly sent ETH (execution trace)","생성자 직접 ETH 송금 (실행 기록)"):
+         labels("Creator-initiated contract-mediated ETH receipt","생성자 시작 거래에서 컨트랙트를 경유한 ETH 수령")));
+       div.append(create("small","",hit.from.slice(0,8)+"… → "+hit.to.slice(0,8)+"… · "+
+         (hit.amount===null?"—":hit.amount.toLocaleString("en-US",{maximumSignificantDigits:8}))+" ETH"));
+       div.append(evidenceLink(chain,hit.hash));internalFunding.append(div);
+      }
+    }
+  }
   metadata.textContent=labels(
-   "Reviewed "+output.events.length+" wallet/transaction pairs (max 6; some may be duplicated across wallets). "+output.failed+" transaction records could not be verified. Creator native transfer sample: "+(output.funding?.sampled??"unavailable")+" outer transactions"+(output.funding?.more?" (older pages not loaded)":"")+". These are NOT lifetime trading results.",
-   "지갑·거래 조합 "+output.events.length+"건 확인(최대 6건, 여러 지갑에 중복 가능). 개별 거래 자료 "+output.failed+"건 미확인. 생성자 일반 거래 표본 "+(output.funding?.sampled??"미확인")+"건"+(output.funding?.more?" (이전 기록 미조회)":"")+". 전체 기간 매매 내역은 아닙니다.");
+   "Reviewed "+output.events.length+" wallet/transaction pairs (max 6). "+output.failed+" transaction records unavailable. Native trace sample: up to 3 watched transactions, max 2 pages each. Creator outer transactions sampled: "+(output.funding?.sampled??"unavailable")+"; inner traces checked: "+(output.innerFunding?.checked??"unavailable")+", incomplete: "+(output.innerFunding?.partial??"unavailable")+". Not a complete history or profit report.",
+   "지갑·거래 조합 "+output.events.length+"건 확인(최대 6건). 개별 거래 자료 "+output.failed+"건 미확인. 네이티브 실행 표본: 추적 거래 최대 3건·각 최대 2페이지. 생성자 일반 거래 표본 "+(output.funding?.sampled??"미확인")+"건, 그중 내부 실행 조회 "+(output.innerFunding?.checked??"미확인")+"건, 기록 불완전 "+(output.innerFunding?.partial??"미확인")+"건. 전체 기간의 매매·수익 분석이 아닙니다.");
   msg(labels("Limited transaction evidence loaded. Do not infer profit or common wallet ownership.","제한된 개별 거래 근거를 조회했습니다. 수익·같은 지갑 소유자를 추정할 수 없습니다."),"ok");
  }
  async function run(){
@@ -220,6 +357,8 @@ function initDeep(){
   try{
    const targets=dedupeEvidenceSources(samples,6);
    const reports=[];
+   // Bounded first three transaction traces for native ETH settlement context.
+   // Each page is capped at 50 explorer records, with a maximum of two pages.
    // Sequential requests avoid burst rates on unauthenticated free explorers.
    let failed=0;
    for(const [idx,target] of targets.entries()){
@@ -267,16 +406,48 @@ function initDeep(){
        }catch(_){swapEvent={present:false,complete:false,pools:[]};}
      }
      const verdict=classifySwapEvidence(tx,logs,target.wallet,token,{complete,swapEvent});
-     reports.push({...target,verdict});
+     let native=null;
+     if(idx<3&&complete&&Array.isArray(logs)&&tx.result==="success"){
+       try{
+         msg(labels("Tracing ETH execution "+(idx+1)+"/3…","ETH 내부 실행 "+(idx+1)+"/3건 확인 중…"),"loading");
+         const sample=await loadTraceSample(innerTraceUrl(chain,target.hash),readJson,{pages:2});
+         native=inspectNativeSettlement(tx,logs,sample?.items||[],target.wallet,token,{complete:sample?.complete===true});
+       }catch(_){native={kind:"unverified",reason:"partial_internal_traces"};}
+     }
+     reports.push({...target,verdict,native});
     }catch(e){failed++;reports.push({...target,verdict:{kind:"unverified",reason:"explorer_unavailable"}});}
    }
-   let native=null;
+   let native=null,innerFunding=null;
    if(creator&&isAddress(creator)){
     try{const outer=await readJson(nativeUrl(chain,creator));if(job!==id)return;
-      native=directNativeFunding(outer,creator,context.holders,chain);}catch(e){}
+      native=directNativeFunding(outer,creator,context.holders,chain);
+      const selected=(Array.isArray(outer.items)?outer.items:[]).filter(t=>
+         t?.result==="success"&&key(t?.from?.hash)===key(creator)&&isHash(t?.hash)).slice(0,3);
+      innerFunding={checked:0,partial:0,hits:[]};
+      for(const outerTx of selected){
+        if(job!==id)return;
+        innerFunding.checked++;
+        msg(labels("Tracing creator-initiated ETH calls "+innerFunding.checked+"/"+selected.length+"…",
+          "생성자 시작 ETH 실행 "+innerFunding.checked+"/"+selected.length+"건 확인 중…"),"loading");
+        try{
+         const trace=await loadTraceSample(innerTraceUrl(chain,outerTx.hash),readJson,{pages:2});
+         if(!trace){innerFunding.partial++;continue;}
+         const result=creatorInitiatedNativeTraces(outerTx,{items:trace.items,next_page_params:trace.complete?null:{more:true}},
+           creator,context.holders,chain);
+         // Count trace-derived ETH receipts only where evidence was fetched. Mark incomplete pages.
+         if(!result.complete)innerFunding.partial++;
+         for(const hit of result.hits){
+          // If the same direct payment already appeared in the creator outer transactions, omit the duplicate.
+          if(native.items.some(x=>key(x.hash)===key(hit.hash)&&key(x.to)===key(hit.to)&&
+             hit.kind==="direct_internal_sender"))continue;
+          innerFunding.hits.push(hit);
+         }
+        }catch(_){innerFunding.partial++;}
+      }
+    }catch(e){}
    }
    if(job!==id)return;
-   output={events:reports,funding:native,failed};render();
+   output={events:reports,funding:native,innerFunding,failed};render();
   }catch(e){if(job===id)msg(labels("Deep evidence lookup failed. No trade conclusion can be drawn.","심층 거래 조회 실패. 매매 여부를 판단할 수 없습니다."),"error");}
   finally{if(id===job){busy=false;button.disabled=false;}}
  }
