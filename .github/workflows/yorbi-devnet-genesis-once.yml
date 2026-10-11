@@ -12,7 +12,8 @@ permissions:
 
 jobs:
   issue-once:
-    if: github.event.head_commit.message == 'ci: arm YORBI one-time Devnet genesis'
+    if: >-
+      github.event.head_commit.message == 'ci: arm YORBI one-time Devnet genesis'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     defaults:
