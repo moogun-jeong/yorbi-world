@@ -1,5 +1,6 @@
 import { boundedMap, memoizedBlockscout } from "./wallet-graph.mjs?v=s64-20261011";
-/* YORBI Sprint 6.4: optimized read-only evidence review. No ownership, PnL, safety or guaranteed trade verdict. */
+import { executionEvidence, contextVerdict } from "./wallet-execution.mjs?v=s66-20261011";
+/* YORBI Sprint 6.6: v4 + smart-account execution context; optimized read-only evidence review. No ownership, PnL, safety or guaranteed trade verdict. */
 export const EVM_EXPLORERS=Object.freeze({ethereum:"https://eth.blockscout.com",base:"https://base.blockscout.com"});
 const isAddress=v=>typeof v==="string"&&/^0x[a-fA-F0-9]{40}$/.test(v);
 const isHash=v=>typeof v==="string"&&/^0x[a-fA-F0-9]{64}$/.test(v);
@@ -37,6 +38,10 @@ export function explainEvidenceReason(reason,lang="en"){
  no_native_counterflow:["No matching native ETH payment found in this transaction sample","해당 거래 표본에서 반대 방향 ETH 결제 흐름을 찾지 못함"],
  partial_internal_traces:["Trace pages incomplete; no conclusion about ETH movement","내부 ETH 거래 내역이 일부 누락되어 결론을 내릴 수 없음"],
  native_payment_opposes_token_flow:["Token transfer and opposite native ETH flow share a transaction; trade not proven","동일 거래에서 토큰 이동과 반대 방향 ETH 흐름 확인 (매매 확정 아님)"],
+ v4_poolmanager_and_token_flow:["Canonical Uniswap v4 PoolManager Swap log and tracked-wallet token movement share one transaction; the token and wallet cannot be attributed to that pool swap with certainty","공식 Uniswap V4 PoolManager의 스왑 로그와 추적 지갑의 토큰 이동이 동일 거래에서 확인됐지만 해당 지갑이 그 풀에서 매매했다고 확정할 수 없음"],
+ erc4337_user_operation_without_verified_swap:["ERC-4337 UserOperation event names the watched wallet; no matching swap was proven","ERC-4337 UserOperation 이벤트에서 추적 지갑이 확인됐으나 실제 스왑은 확인하지 못함"],
+ incomplete_or_failed:["Transaction failed or relevant event logs incomplete","실패한 거래이거나 이벤트 로그가 불완전함"],
+ no_valid_tracked_token_flow:["Matching token movement by watched wallet not found","추적 지갑의 해당 토큰 이동을 확인하지 못함"],
  explorer_unavailable:["Transaction details unavailable from explorer","블록 탐색기에서 거래 상세 정보를 가져오지 못함"]
  };
  const entry=phrases[reason];
@@ -295,6 +300,24 @@ function initDeep(){
   if(e.verdict.quoteToken&&e.verdict.quoteAmount!==null)
    div.append(create("small","",labels("Opposing payment: ","반대 방향 결제 토큰: ")+e.verdict.quoteToken+" ~"+e.verdict.quoteAmount.toLocaleString("en-US",{maximumSignificantDigits:5})));
   div.append(create("small","",labels("Why: ","판정 근거: ")+explainEvidenceReason(e.verdict.reason,document.documentElement.lang)));
+  if(e.execution?.v4?.length){
+    const pool=e.execution.v4[0].poolId;
+    div.append(create("small","tracker-native-note",
+      labels("Uniswap v4 Pool ID (context only): ","Uniswap V4 Pool ID (거래 정황): ")+pool.slice(0,12)+"…"+pool.slice(-8)));
+    div.append(create("small","",
+      labels("PoolManager swap caller (often router): ","PoolManager 스왑 호출자(라우터일 수 있음): ")+
+      (e.execution.v4[0].caller||"—")));
+  }
+  if(e.execution?.erc4337?.length){
+    div.append(create("small","tracker-native-note",labels(
+     "ERC-4337 UserOperation identifies this smart account; bundler ≠ wallet owner.",
+     "ERC-4337 UserOperation에서 해당 스마트 지갑 확인 · 번들러 ≠ 지갑 소유자")));
+  }
+  if(e.execution?.eip7702){
+    div.append(create("small","tracker-native-note",labels(
+      "EIP-7702 type-4 transaction; the watched wallet was NOT necessarily the signer.",
+      "EIP-7702 유형 4 거래 · 추적 지갑이 직접 서명했다는 뜻은 아님")));
+  }
   if(nativeFocus){
    const flow=native.events?.[0];
    const amount=flow?.amount===null||flow?.amount===undefined?"":flow.amount.toLocaleString("en-US",{maximumSignificantDigits:7})+" ETH";
@@ -392,14 +415,23 @@ function initDeep(){
       complete=received?.complete===true;
     }
     if(!live())return null;
-    let swapEvent=null;
-    if(complete&&Array.isArray(logs)&&logs.length>1&&!methodSwap(tx)){
+    let swapEvent=null,eventRecords=null;
+    if(complete&&Array.isArray(logs)){
       try{
-       const events=await readPages(evidenceUrl(chain,target.hash,"/logs"));
-       swapEvent=swapEventEvidence(events?.items||[],{complete:events?.complete===true});
+       // v4 and ERC-4337 signals are emitted during nested calls, even if outer method is unknown.
+       // Fetch at most two pages. A truncated event list must not support a verified context label.
+       eventRecords=await readPages(evidenceUrl(chain,target.hash,"/logs"));
+       swapEvent=swapEventEvidence(eventRecords?.items||[],{complete:eventRecords?.complete===true});
       }catch(_){swapEvent={present:false,complete:false,pools:[]};}
     }
-    const verdict=classifySwapEvidence(tx,logs,target.wallet,token,{complete,swapEvent});
+    const execution=executionEvidence(tx,eventRecords?.items||[],target.wallet,
+      {complete:eventRecords?.complete===true,chain});
+    let verdict=classifySwapEvidence(tx,logs,target.wallet,token,{complete,swapEvent});
+    if(execution.v4.length>0){
+      // A v4 Pool ID alone does not reveal its two currencies or its actual end trader.
+      const v4=contextVerdict(tx,logs,target.wallet,token,execution,{complete});
+      if(v4.kind==="swap_context_evidence")verdict=v4;
+    }
     let native=null;
     if(index<3&&complete&&Array.isArray(logs)&&tx.result==="success"){
       try{
@@ -407,7 +439,7 @@ function initDeep(){
        native=inspectNativeSettlement(tx,logs,trace?.items||[],target.wallet,token,{complete:trace?.complete===true});
       }catch(_){native={kind:"unverified",reason:"partial_internal_traces"};}
     }
-    return {...target,verdict,native};
+    return {...target,verdict,native,execution};
    }catch(_){
     if(!live())return null;
     return {...target,verdict:{kind:"unverified",reason:"explorer_unavailable"},native:null};

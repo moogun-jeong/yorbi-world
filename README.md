@@ -305,6 +305,25 @@ Mobile acceptance: scan PEPE (Ethereum), run Wallet Radar, inspect the 24h/7d/sa
 Validation: Run the full existing unit suite plus `tests/scan-restore.test.mjs`; manually scan PEPE in mobile Safari, expand transaction evidence, open a Blockscout link, return to YORBI and check the same token, report, selected period, visible location and risk indicators. Force a full tab reload and check the restored notice. Check **Clear saved results**. Re-run a different token and ensure old contract evidence is never mixed in. No source-level test guarantees iOS popup/tab lifecycle behavior; confirm on device.
 
 
+## Sprint 6.6 — Uniswap v4, ERC-4337 and EIP-7702 execution context (2026-10-11)
+
+**Status:** Browser-only forensic **context** enhancement. Ethereum / Base wallet tracking only. No automatic trading, paid API, GitHub Actions, or new external accounts. Does **not** imply Robinhood Chain is supported: the previously investigated OVO was on Robinhood Chain.
+
+- Add **canonical Uniswap v4** `Swap(bytes32 indexed id,address indexed sender,int128 amount0,int128 amount1,uint160 sqrtPriceX96,uint128 liquidity,int24 tick,uint24 fee)` topic `0x40e9cecb9f5f1f1c5b9c97dec2917b7ee92e57ba5563708daca94dd84ad7112f`, **only** from recognized Ethereum/Base PoolManager `0x000000000004444c5dc75cb358380d2e3de08a90`. Distinct Pool IDs and PoolManager caller addresses are visible as evidence, but these do not identify the pool's currency pair or the ultimate wallet/trader. A received/sent tracked ERC-20 in the same successful transaction is marked **DEX v4 CONTEXT**, **never a confirmed buy/sell** or proof of causal relation.
+- From known **ERC-4337 EntryPoints** v0.6, v0.7, v0.8, match `UserOperationEvent` topic `0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f` and its indexed sender topic to the watched address. It establishes the presence of a user operation concerning that account, **not** the identity of its owner, a completed swap, or a buy/sell. Ignore spoof events from other emitter addresses.
+- Note outer transaction type `4` / `0x04` as **EIP-7702 authorization-format transaction context**. The watched wallet may be completely different from the outer signer and may have been authorized in an earlier transaction; do not conflate a 7702/type-4 transaction with proof that the watched wallet signed.
+- Previously, transaction event logs were fetched only under specific heuristics. Now, when token-transfer logs are complete, fetch at most **two pages of event logs** for each of the at-most-six on-demand sampled transactions. The existing bounded concurrency=2 and deduplicated API calls, timeouts and abort handling remain. If events are incomplete or missing, do **not** assert a verified swap.
+- Render protocol hints beneath individual transaction evidence cards; store them inside the existing browser-local 12-hour restoration snapshot. The JSON report and classified summary retain conservative swap-context categories rather than turning contexts into confirmed trades.
+- **Not implemented**: direct Uniswap V4 pool-currency attribution from pool initialization; v4 fee hooks/custom accounting interpretation; cross-router profit or complete settlement; actual swap authorization/ownership from 7702; the full execution graph for 4337; Uniswap V4 swaps on unsupported chains; EVM chains without verified public Blockscout instances; historical launch-bundled buys; realized trading PnL.
+- UI must present an unambiguous difference among **observed event / watched-wallet token movement / proven market trade**, with the latter not claimed for arbitrary router/smart-wallet transactions. Canonical event topic and known emitter reduce but do not eliminate transaction-level causation ambiguity.
+
+**Regression tests:**
+```bash
+node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs tests/wallet-graph.test.mjs tests/wallet-report.test.mjs tests/scan-restore.test.mjs tests/wallet-execution.test.mjs
+```
+**Mobile acceptance:** Open a valid Ethereum or Base token in Explorer → Wallet Radar → Inspect transaction evidence. Check each additional v4 Pool ID / ERC-4337 operation / 7702 label against original Blockscout transaction event logs; ordinary PEPE token transfers might show no new labels and that is expected. Previously saved scan results (12-hour local snapshots) will only include newly extracted 6.6 fields **after rerunning the deep inspection**. No iPhone runtime behavior is considered verified by unit tests alone.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.
