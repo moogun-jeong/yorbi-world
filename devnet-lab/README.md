@@ -1,5 +1,8 @@
 # YORBI Phantom Solana Devnet Web Lab
-STATUS: **CODE / DRAFT PR ONLY. No deployment or token issuance completed.**
+STATUS: **TEST WEB HOST DEPLOYED / DRAFT PR / NO TOKEN ISSUED**.
+
+Trial HTTPS page: https://yorbi-devnet-wallet-lab.vercel.app/ (Vercel Hobby standalone project; separate from production Cloudflare Workers).
+Deployment ready and webpage anonymously accessible on 2026-10-11; **actual Phantom wallet/signing and mint still require user test**.
 Solana Devnet-only Phantom signing demo for public wallet `5nhZYYpyrB8gMtmqBBSREyNTdn62u8QEo2T1mV8W4ckc`.
 ## User preparation
 1. Phantom app > Developer Settings > Testnet Mode > Solana Devnet.
@@ -14,7 +17,7 @@ npm test
 npm run build
 npm run dev
 ```
-Generated `dist/` can be served on free HTTPS static hosting; production deployment requires separate user review and verification.
+Generated `dist/` is served from independent free HTTPS Vercel test host. No changes were merged to the Cloudflare production website; merging draft PR requires review.
 ## Stages
 Connect + Devnet genesis verification > verify faucet balance > mint+metadata (Token-2022) > user approves 1,000 YORBI-T > optionally send 10 to another wallet > irreversible mint authority revocation after user approval > read back supply/authorities. Only public Mint Address is stored locally for retries.
 ### Safety
