@@ -324,6 +324,27 @@ node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.t
 **Mobile acceptance:** Open a valid Ethereum or Base token in Explorer → Wallet Radar → Inspect transaction evidence. Check each additional v4 Pool ID / ERC-4337 operation / 7702 label against original Blockscout transaction event logs; ordinary PEPE token transfers might show no new labels and that is expected. Previously saved scan results (12-hour local snapshots) will only include newly extracted 6.6 fields **after rerunning the deep inspection**. No iPhone runtime behavior is considered verified by unit tests alone.
 
 
+## Sprint 6.7 — integrated risk indicators and evidence coverage (2026-10-11)
+
+**Read-only, free, no new providers:** The combined panel reuses already-fetched DEX Screener / GoPlus / Blockscout data. No extra network request, wallet connection, API key, backend, database, GitHub Actions workflow, token launch or token safety rating is added.
+
+- A new **Integrated risk & evidence review** appears with the token lookup. It refreshes incrementally as GoPlus, optional wallet tracking and optional deep transaction evidence become available. After a mobile reload, the existing 12-hour device-local snapshot restoration replay provides the same panel without new provider calls.
+- **Selected DEX pair liquidity:** provider-reported USD liquidity is classified as "attention" under $20K, "review" under $100K, else "reported." These are **presentation thresholds**, not measured sellable exit liquidity, executable slippage or guarantees. Missing values stay unknown. Raw DEX Screener link is allowlisted.
+- **Security indicators:** report actual checked GoPlus fields, risk flags and missing checks. A flagged admin function is not necessarily actively callable by a current owner, and no reported flags does **not** certify security. Never infer a verified absence of honeypot or a successful sell.
+- **Holder concentration:** GoPlus-reported top N summed percentage uses 25%/50% *attention thresholds*, not attribution. LP, lock contracts, CEX wallets, burn addresses and custodians can be included; aggregate concentration must **never** be labeled "developer holdings."
+- **LP lock / burn / liquidity rug prevention:** always unverified. Displaying liquidity is not verifying LP lock status. No new authority, creator control, LP rug or fee-escrow verification is implied.
+- **Creator flows:** only a GoPlus **provider-reported token creator** (not verified current admin, owner or real-world individual) is associated with bounded Blockscout outgoing ERC-20 transfer records. Outgoing ERC-20 transfers **are not market sales**. Unknown transfer history means unknown, not zero trading.
+- **Sampled swap evidence:** only when that same creator address appears in the separately inspected deep sample does the dashboard display its explicit swap-spend evidence (with Blockscout hash) or weaker router/V4 contextual transfer evidence. Uninspected creator records remain "unknown"; it does not infer lifetime sells, realized profits or related-owner wallets.
+- Each separate evidence row states **provider-reported / on-chain sample / context only / unverified**, and flags attention/review/unknown independently. A global "SAFE" score, fraud verdict, buy signal, investment recommendation or issuer accusation is deliberately absent.
+- Strict chain+token matching prevents stale saved wallet/deep records from being mixed with a different contract. Existing browser-local restore events are supported; no additional persistent data is stored.
+- BNB Chain and Solana continue to receive DEX/GoPlus evidence where available but **not** Ethereum/Base-only wallet tracing. A missing tracing layer is shown as unknown rather than silently fabricated.
+- When the selected provider data cannot be retrieved or public API throttling occurs, the summary stays unknown. No cross-provider "verified" claim can be inferred from one source.
+
+Tests: `node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs tests/wallet-graph.test.mjs tests/wallet-report.test.mjs tests/scan-restore.test.mjs tests/wallet-execution.test.mjs tests/risk-synthesis.test.mjs`
+
+**Mobile verification:** Look up Ethereum PEPE; see liquidity, GoPlus flags/holder share, LP unknown, creator unscanned. Click Wallet Radar and then deep inspect; ensure creator outgoing transfers do not turn into sales without actual creator-address swap evidence. Follow source links, switch KO/EN, reload saved snapshot, and scan another token to confirm stale results are cleared. The on-device UI sequence remains to be validated by a real browser and is not established by pure logic unit tests.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

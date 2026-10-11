@@ -304,6 +304,24 @@ section[id]{scroll-margin-top:24px}
 .scan-clear{background:#fff;color:#68769b;border:1px solid #ccd6e9;border-radius:11px;font-size:12px;font-weight:700;padding:10px 14px;margin:8px 0 12px;cursor:pointer}
 .scan-clear:focus-visible{outline:3px solid #99a8dd;outline-offset:2px}
 @media(max-width:740px){.scan-clear{width:100%;min-height:40px}.scan-restored{font-size:12px}}
+
+/* Sprint 6.7 combined signal review: neutral, evidence-first, mobile compact */
+.risk-synthesis{margin-top:25px;border-top:1px solid #dfe5f2;padding-top:26px}
+.risk-heading h3{font-size:21px;letter-spacing:-.35px;color:#263253;margin:9px 0 12px}
+.risk-heading p{color:#677794;font-size:12px;line-height:1.7;margin:0 0 15px}
+.risk-counts{font-weight:750;font-size:13px;color:#374769;margin:10px 0}
+.risk-scope{font-size:12px;color:#667895;line-height:1.65;margin:9px 0 16px}
+.risk-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;list-style:none;padding:0;margin:0 0 20px}
+.risk-evidence-row{min-width:0;border:1px solid #dde5f1;border-radius:14px;padding:14px;background:transparent;display:flex;flex-direction:column;gap:7px}
+.risk-evidence-head{display:flex;align-items:center;justify-content:flex-start}
+.risk-evidence-tag{font-size:10px;border:1px solid #d5dceb;border-radius:8px;padding:4px 8px;color:#596986;font-weight:700}
+.risk-attention{border-color:#deb9a5;color:#93614e}
+.risk-watch{border-color:#d9cfae;color:#867346}
+.risk-unknown{border-style:dashed}
+.risk-evidence-description{font-size:12px;line-height:1.7;color:#3b4c6c;margin:0;overflow-wrap:anywhere;font-weight:650}
+.risk-evidence-meta{color:#7b89a3;font-size:11px;line-height:1.45}
+.risk-evidence-link{font-size:11px;color:#5968b2;text-decoration:underline;text-underline-offset:3px;align-self:flex-start}
+@media(max-width:680px){.risk-evidence{grid-template-columns:1fr}.risk-heading h3{font-size:19px}.risk-evidence-row{padding:13px}}
 </style>
 </head><body>
 <div class="topnote">✦ GENESIS CHAPTER &nbsp;·&nbsp; <b data-en="NO TOKEN HAS BEEN ISSUED" data-ko="아직 토큰이 발행되지 않았습니다">NO TOKEN HAS BEEN ISSUED</b> &nbsp;·&nbsp; ✦</div>
@@ -388,7 +406,19 @@ section[id]{scroll-margin-top:24px}
      <div class="scan-insight"><span aria-hidden="true">✧</span><p id="scan-interpretation"></p></div>
      <div class="scan-bottom"><span class="scan-timestamp"><span data-en="Requested at" data-ko="조회 시각">Requested at</span>: <time id="scan-checked"></time></span><a id="scan-source" target="_blank" rel="noopener noreferrer" href="https://dexscreener.com/" hidden data-en="Verify on DEX Screener ↗" data-ko="DEX Screener에서 검증 ↗">Verify on DEX Screener ↗</a></div>
    </div>
-   <section id="security-panel" class="safety-panel" hidden aria-label="Security signals">
+   <section id="risk-synthesis" class="risk-synthesis" hidden aria-label="Integrated evidence and risk context">
+  <div class="risk-heading">
+    <span class="scan-small-label" data-en="SPRINT 6.7 · COMBINED EVIDENCE" data-ko="스프린트 6.7 · 근거 통합 점검">SPRINT 6.7 · COMBINED EVIDENCE</span>
+    <h3 data-en="Integrated risk & evidence review" data-ko="위험 신호·온체인 근거 통합 점검">Integrated risk & evidence review</h3>
+    <p data-en="DEX liquidity, GoPlus security and Blockscout wallet evidence side by side. Each source has its own limitations; this is not a SAFE score, developer accusation or buy signal." data-ko="DEX 유동성·GoPlus 보안 신호·Blockscout 지갑 이동을 한 화면에 함께 표시합니다. 서로 다른 근거 수준을 구분하며 안전 점수·개발자 사기 판정·매수 신호를 제공하지 않습니다.">DEX liquidity, GoPlus security and Blockscout wallet evidence side by side.</p>
+  </div>
+  <p id="risk-counts" class="risk-counts" role="status"></p>
+  <p id="risk-scope" class="risk-scope"></p>
+  <ul id="risk-evidence" class="risk-evidence"></ul>
+  <p id="risk-summary" class="tracker-disclaimer"></p>
+  <p class="tracker-mini" data-en="Observed means provider-reported or bounded on-chain evidence, not independently audited. Even zero flagged checks cannot verify LP locks, sell success, creator wallet control or full history. Refresh the Explorer scan for current conditions." data-ko="관찰·제공은 제공사 자료 또는 제한된 온체인 표본일 뿐 독립 감사가 아닙니다. 위험 신호가 0개여도 LP 잠금·실제 매도 성공·생성자 통제·전체 거래 이력은 검증되지 않습니다. 최신 상태는 새로 조회하세요.">Observed evidence is not an independent audit. Refresh the token for fresh information.</p>
+</section>
+<section id="security-panel" class="safety-panel" hidden aria-label="Security signals">
 <div class="safety-heading"><div><span class="scan-small-label">GO PLUS · SECURITY SIGNALS</span><h3 data-en="YORBI Safety Scan" data-ko="YORBI 위험 신호 점검">YORBI Safety Scan</h3></div><span class="proof-pill proof-planned" data-en="NOT AN AUDIT" data-ko="보안 감사 아님">NOT AN AUDIT</span></div>
 <p class="safety-status" id="security-status" role="status" aria-live="polite" data-kind="pending"></p>
 <div class="safety-stats">
@@ -648,5 +678,6 @@ section[id]{scroll-margin-top:24px}
 <script type="module" src="assets/wallet-evidence.mjs?v=s66-20261011"></script>
 <script type="module" src="assets/wallet-graph.mjs?v=s65-20261011"></script>
 <script type="module" src="assets/wallet-report.mjs?v=restore-20261011"></script>
+<script type="module" src="assets/risk-synthesis.mjs?v=s67-20261011"></script>
 <script type="module" src="assets/scan-restore.mjs?v=restore-20261011"></script>
 </body></html>
