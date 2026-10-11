@@ -1,48 +1,41 @@
-# YORBI Solana Devnet — isolated PoW faucet funding validation
+# YORBI Devnet — PoW funding verification report
 
-Status: **PROPOSED EXPERIMENT / NOT TOKEN ISSUANCE**
+**Status:** BLOCKED / VERIFIED (2026-10-11), **no tokens minted**.
+**Environment:** GitHub Actions, Node.js 22, ephemeral memory-only signers, Solana Devnet exclusively.
 
-## Discovery
+## Previous issuance failures
+- [Original Actions run #1](https://github.com/moogun-jeong/yorbi-world/actions/runs/38116820927): malformed workflow YAML; corrected in PR #2.
+- [Original Actions run #2](https://github.com/moogun-jeong/yorbi-world/actions/runs/38118023849): Devnet RPC faucet returned HTTP 429 Too Many Requests on 1, 0.5 and 0.2 SOL requests. Script exited **No mint created**.
 
-The Solana documentation and \`https://faucet.solana.com/\` point to \`devnet-pow\`.
-Reviewing \`jarry-xiao/proof-of-work-faucet/cli/src/main.rs\` revealed that
-the official-recommended client calls \`request_airdrop(1 SOL)\` if its fee payer
-has fewer than **5,000 lamports**. The on-chain faucet \`airdrop\` instruction
-also takes a transaction fee-paying signer. Proof-of-work is therefore **not
-a zero-balance bootstrap solution by itself**.
+## PoW client/source audit
+- Official Solana Faucet and Cookbook recommend the `devnet-pow` tool maintained by Ellipsis Labs.
+- `jarry-xiao/proof-of-work-faucet/cli/src/main.rs` explicitly checks whether fee payer has < 5,000 lamports and then attempts conventional `request_airdrop(1 SOL)`. Thus **PoW is not a zero-balance bootstrap mechanism**.
+- `programs/proof-of-work-faucet/src/lib.rs` requires a transaction payer signer; PoW reward is paid to that payer once proof is accepted.
+- YORBI's proof-only stage reproduces the on-chain PDA derivation and claims through the tested web3.js SDK; no historic Rust CLI needs installing.
 
-Confirmed previous tests:
-- Run #1: workflow YAML parsing error (fixed).
-- Run #2: GitHub hosted runner's \`requestAirdrop\` returned HTTP 429; **no mint and no transfer**.
+## Funding-only GitHub verification
+### PoW Funding Probe
+- [PoW prerequisite run #1](https://github.com/moogun-jeong/yorbi-world/actions/runs/38118855106): SDK installation success; syntax check success; **6/6 unit tests pass**.
+- The selected official documented three-A PoW faucet, difficulty 3 and reward 0.02 SOL, resolved to source address `6yvwhesLJeE8fNWviosRoUtBP3VFUXE7SEhSP9fFRJ3Z`.
+- Source account on Devnet at test time held **0 lamports**; job ended with `BLOCKED: POW_FAUCET_EMPTY` **before any funding attempt or token transaction**.
 
-## New independent test
+### Read-only PoW source inventory
+- [Read-only inventory run #1](https://github.com/moogun-jeong/yorbi-world/actions/runs/38118919917): GitHub workflow **SUCCESS**; on-chain faucet source inventory ran without signing or sending transactions.
+- Found **23 PoW faucet specifications** owned by the expected PoW program.
+- **22** were insufficiently funded for their configured reward. Exactly **one** has enough to pay its configured reward of **100 lamports**, but 100 lamports is below a typical 5,000-lamport transaction fee, so it is not practically useful.
+- Practical candidate count: **0** (defined conservatively as difficulty ≤ 3, reward ≥ 0.005 SOL, and source balance ≥ promised reward).
+- Two PoW faucet source addresses listed on the official faucet monitor were also empty at inspection (`6yvwhes...` and `2pekXzx...`).
+- Do not repeatedly mine or request faucet funds while this gate is blocked. Balances can change; recheck read-only before attempting another workflow.
 
-- \`pow-utils.mjs\`: PoW PDA derivation and safety gates.
-- \`pow-funding.mjs\`: Devnet-only one-time stage:
-  1. Confirm exact Devnet genesis hash.
-  2. Read the PoW faucet spec and actual funded source balance.
-  3. Make **one** minimal Devnet RPC bootstrap request for fee payer (0.002 SOL);
-     this is required by the actual PoW instruction, not an optional workaround.
-  4. Abort if bootstrap fails; **never mint tokens**.
-  5. If funded, grind a three-A prefix proof, claim 0.02 DEVNET SOL from the
-     on-chain faucet, and verify the increased Devnet balance.
-- \`pow-utils.test.mjs\`: deterministic tests for chain gate, funding gate,
-  PoW account metadata, and missing fee payer.
+## Security and next action
+- Zero real SOL / fiat spent. User's Phantom public address was not used in this funding-only verification.
+- No YORBI-T mint, transfer, metadata transaction, or authority revocation executed. No test token address / transaction signature exists.
+- Keep PR #2 as draft; **do not merge the experiment workflows into production main**.
+- A later attempt needs a funded PoW source *and* a fee-payer bootstrap source. Funding must be verified before any issuance.
+- Alternative without real money: user-controlled Phantom Devnet wallet receives test SOL from a legitimate faucet after user authentication, then user signs a browser-based test issuance. No seed phrase or private key should ever be sent to ChatGPT or GitHub.
 
-### Security and limitations
-
-The fee payer and proof keys are generated **only in runner memory**;
-no keys are written to GitHub, logs, artifact, secrets, or a user's computer.
-The trial is isolated to a short-lived hosted runner.
-If PoW funding succeeds, the resulting Devnet SOL is held by an ephemeral
-signer and is unavailable after runner exit. A separate follow-on issuance
-needs its own funding/signing plan. This PoW test **does not** trigger the mint
-script or modify the official YORBI website.
-
-PoW faucets can run out of funds, change parameters, be rate limited at the
-RPC layer, or time out. Log actual on-chain proof, never declare success based
-solely on a command completing.
-
-## Pending evidence
-
-Append the GitHub workflow run URL and concise measured status after execution.
+## GitHub references
+- [PR #2](https://github.com/moogun-jeong/yorbi-world/pull/2)
+- [Solana Foundation faucet](https://faucet.solana.com/)
+- [Solana developer cookbook](https://solana.com/developers/cookbook/development/airdrops-and-faucets)
+- [PoW source](https://github.com/jarry-xiao/proof-of-work-faucet)
