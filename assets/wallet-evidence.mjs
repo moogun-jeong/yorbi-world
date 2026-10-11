@@ -1,4 +1,5 @@
-/* YORBI Sprint 6.1: read-only evidence review. No ownership, PnL, safety or guaranteed trade verdict. */
+import { boundedMap, memoizedBlockscout } from "./wallet-graph.mjs?v=s64-20261011";
+/* YORBI Sprint 6.4: optimized read-only evidence review. No ownership, PnL, safety or guaranteed trade verdict. */
 export const EVM_EXPLORERS=Object.freeze({ethereum:"https://eth.blockscout.com",base:"https://base.blockscout.com"});
 const isAddress=v=>typeof v==="string"&&/^0x[a-fA-F0-9]{40}$/.test(v);
 const isHash=v=>typeof v==="string"&&/^0x[a-fA-F0-9]{64}$/.test(v);
@@ -254,12 +255,16 @@ function evidenceLink(chain,hash){
  if(href){a.href=href;a.target="_blank";a.rel="noopener noreferrer";}else a.textContent="—";
  return a;
 }
-async function readJson(url){
+async function readJson(url,parentSignal){
  const abort=new AbortController(),timeout=setTimeout(()=>abort.abort(),12000);
- try{const r=await fetch(url,{headers:{Accept:"application/json"},signal:abort.signal,cache:"no-store"});
+ const cancel=()=>abort.abort();
+ if(parentSignal?.aborted)abort.abort();
+ else parentSignal?.addEventListener("abort",cancel,{once:true});
+ try{
+  const r=await fetch(url,{headers:{Accept:"application/json"},signal:abort.signal,cache:"no-store"});
   if(!r.ok)throw Error("HTTP_"+r.status);
   return await r.json();
- }finally{clearTimeout(timeout);}
+ }finally{clearTimeout(timeout);parentSignal?.removeEventListener("abort",cancel);}
 }
 function initDeep(){
  const section=document.getElementById("tracker-deep");
@@ -269,9 +274,9 @@ function initDeep(){
  const metadata=document.getElementById("tracker-deep-scope");
  const internalFunding=document.getElementById("tracker-deep-inner-funding");
  const resultsArea=section.querySelector(".tracker-deep-results");
- let context=null,output=null,busy=false,job=0;
+ let context=null,output=null,busy=false,job=0,activeController=null;
  const msg=(a,state="info")=>{status.textContent=a;status.dataset.kind=state};
- function reset(){job++;context=null;output=null;busy=false;button.disabled=false;section.hidden=true;resultsArea.hidden=true;trades.replaceChildren();funding.replaceChildren();internalFunding?.replaceChildren();}
+ function reset(){job++;activeController?.abort();activeController=null;context=null;output=null;busy=false;button.disabled=false;section.hidden=true;resultsArea.hidden=true;trades.replaceChildren();funding.replaceChildren();internalFunding?.replaceChildren();}
  function row(e,chain){
   const div=create("div","tracker-deep-event");
   const kind={
@@ -344,112 +349,127 @@ function initDeep(){
       }
     }
   }
+  const timing=output.stats?
+   labels(" Requests "+output.stats.requests+" (deduplicated), "+(output.stats.elapsed/1000).toFixed(1)+"s.",
+    " 실제 API 요청 "+output.stats.requests+"회(중복 제거), "+(output.stats.elapsed/1000).toFixed(1)+"초."):"";
   metadata.textContent=labels(
-   "Reviewed "+output.events.length+" wallet/transaction pairs (max 6). "+output.failed+" transaction records unavailable. Native trace sample: up to 3 watched transactions, max 2 pages each. Creator outer transactions sampled: "+(output.funding?.sampled??"unavailable")+"; inner traces checked: "+(output.innerFunding?.checked??"unavailable")+", incomplete: "+(output.innerFunding?.partial??"unavailable")+". Not a complete history or profit report.",
+   "Reviewed "+output.events.length+" wallet/transaction pairs (max 6). "+output.failed+" transaction records unavailable. Native trace sample: up to 3 watched transactions, max 2 pages each. Creator outer transactions sampled: "+(output.funding?.sampled??"unavailable")+"; inner traces checked: "+(output.innerFunding?.checked??"unavailable")+", incomplete: "+(output.innerFunding?.partial??"unavailable")+". Not a complete history or profit report."+timing,
    "지갑·거래 조합 "+output.events.length+"건 확인(최대 6건). 개별 거래 자료 "+output.failed+"건 미확인. 네이티브 실행 표본: 추적 거래 최대 3건·각 최대 2페이지. 생성자 일반 거래 표본 "+(output.funding?.sampled??"미확인")+"건, 그중 내부 실행 조회 "+(output.innerFunding?.checked??"미확인")+"건, 기록 불완전 "+(output.innerFunding?.partial??"미확인")+"건. 전체 기간의 매매·수익 분석이 아닙니다.");
   msg(labels("Limited transaction evidence loaded. Do not infer profit or common wallet ownership.","제한된 개별 거래 근거를 조회했습니다. 수익·같은 지갑 소유자를 추정할 수 없습니다."),"ok");
  }
+
  async function run(){
   if(!context||busy)return;
   busy=true;button.disabled=true;
   const id=++job,{chain,token,creator,samples}=context;
-  msg(labels("Checking individual transactions and creator funding…","개별 거래와 생성자 자금 이동을 확인 중입니다…"),"loading");
-  try{
-   const targets=dedupeEvidenceSources(samples,6);
-   const reports=[];
-   // Bounded first three transaction traces for native ETH settlement context.
-   // Each page is capped at 50 explorer records, with a maximum of two pages.
-   // Sequential requests avoid burst rates on unauthenticated free explorers.
-   let failed=0;
-   for(const [idx,target] of targets.entries()){
-    if(job!==id)return;
-    msg(labels("Reviewing transaction "+(idx+1)+"/"+targets.length+"…","개별 거래 "+(idx+1)+"/"+targets.length+"건 분석 중…"),"loading");
-    const url=evidenceUrl(chain,target.hash);
-    try{
-     const tx=await readJson(url);
-     if(!tx||key(tx.hash)!==key(target.hash))throw Error("hash_mismatch");
-     let logs=Array.isArray(tx.token_transfers)?tx.token_transfers:null;
-     let complete=logs!==null&&!tx.token_transfers_overflow;
-     if(!complete){
-       const transferPage=await readJson(evidenceUrl(chain,target.hash,"/token-transfers"));
-       logs=Array.isArray(transferPage?.items)?transferPage.items:null;
-       complete=logs!==null&&!transferPage?.next_page_params;
-       // Bounded second page for high-volume transactions. Never treat truncated logs as complete.
-       if(logs!==null&&transferPage?.next_page_params){
-         const next=nextEvidencePageUrl(evidenceUrl(chain,target.hash,"/token-transfers"),transferPage.next_page_params);
-         if(next){
-          try{
-           const follow=await readJson(next);
-           if(Array.isArray(follow.items)){
-             logs=logs.concat(follow.items);complete=!follow.next_page_params;
-           }
-          }catch(_){complete=false;}
-         }
+  const controller=new AbortController();activeController=controller;
+  const started=Date.now();let requests=0,finished=0;
+  const reader=memoizedBlockscout(url=>{
+   requests++;return readJson(url,controller.signal);
+  },{max:64});
+  const targets=dedupeEvidenceSources(samples,6);
+  const jobs=targets.map(t=>({kind:"target",item:t}));
+  if(creator&&isAddress(creator))jobs.push({kind:"creator"});
+  msg(labels("Reviewing evidence with 2 parallel jobs (free API)…",
+   "무료 API를 이용해 최대 2건씩 병렬 조회 중…"),"loading");
+  const live=()=>id===job&&!controller.signal.aborted;
+  const readPages=async(base)=>{
+   if(!base||!live())return null;
+   return loadTraceSample(base,reader,{pages:2});
+  };
+  const traceTarget=async(target,index)=>{
+   if(!live())return null;
+   const url=evidenceUrl(chain,target.hash);
+   try{
+    const tx=await reader(url);
+    if(!live())return null;
+    if(!tx||key(tx.hash)!==key(target.hash))throw Error("hash_mismatch");
+    let logs=Array.isArray(tx.token_transfers)?tx.token_transfers:null;
+    let complete=logs!==null&&!tx.token_transfers_overflow;
+    if(!complete){
+      const received=await readPages(evidenceUrl(chain,target.hash,"/token-transfers"));
+      logs=received?.items??null;
+      complete=received?.complete===true;
+    }
+    if(!live())return null;
+    let swapEvent=null;
+    if(complete&&Array.isArray(logs)&&logs.length>1&&!methodSwap(tx)){
+      try{
+       const events=await readPages(evidenceUrl(chain,target.hash,"/logs"));
+       swapEvent=swapEventEvidence(events?.items||[],{complete:events?.complete===true});
+      }catch(_){swapEvent={present:false,complete:false,pools:[]};}
+    }
+    const verdict=classifySwapEvidence(tx,logs,target.wallet,token,{complete,swapEvent});
+    let native=null;
+    if(index<3&&complete&&Array.isArray(logs)&&tx.result==="success"){
+      try{
+       const trace=await readPages(innerTraceUrl(chain,target.hash));
+       native=inspectNativeSettlement(tx,logs,trace?.items||[],target.wallet,token,{complete:trace?.complete===true});
+      }catch(_){native={kind:"unverified",reason:"partial_internal_traces"};}
+    }
+    return {...target,verdict,native};
+   }catch(_){
+    if(!live())return null;
+    return {...target,verdict:{kind:"unverified",reason:"explorer_unavailable"},native:null};
+   }
+  };
+  const traceCreator=async()=>{
+   if(!live()||!creator||!isAddress(creator))return null;
+   try{
+     const outer=await reader(nativeUrl(chain,creator));
+     if(!live()||!Array.isArray(outer?.items))return null;
+     const direct=directNativeFunding(outer,creator,context.holders,chain);
+     const eligible=outer.items.filter(x=>x?.result==="success"&&key(x.from?.hash)===key(creator)&&isHash(x.hash)).slice(0,3);
+     const innerFunding={checked:0,partial:0,hits:[]};
+     for(const transaction of eligible){
+      if(!live())return null;
+      innerFunding.checked++;
+      try{
+       const trace=await readPages(innerTraceUrl(chain,transaction.hash));
+       if(!trace){innerFunding.partial++;continue;}
+       const result=creatorInitiatedNativeTraces(transaction,
+         {items:trace.items,next_page_params:trace.complete?null:{more:true}},
+         creator,context.holders,chain);
+       if(!result.complete)innerFunding.partial++;
+       for(const hit of result.hits){
+        if(direct.items.some(v=>key(v.hash)===key(hit.hash)&&key(v.to)===key(hit.to)&&
+          hit.kind==="direct_internal_sender"))continue;
+        innerFunding.hits.push(hit);
        }
+      }catch(_){innerFunding.partial++;}
      }
-     let swapEvent=null;
-     // A DEX-looking event alone does NOT prove a particular user's trade.
-     // Read transaction logs only where complete token flows exist and no explicit swap call.
-     if(complete&&Array.isArray(logs)&&logs.length>1&&!methodSwap(tx)){
-       try{
-         const initial=await readJson(evidenceUrl(chain,target.hash,"/logs"));
-         let eventLogs=Array.isArray(initial.items)?initial.items:[];
-         let allLogs=Array.isArray(initial.items)&&!initial.next_page_params;
-         if(initial.next_page_params&&Array.isArray(initial.items)){
-           const next=nextEvidencePageUrl(evidenceUrl(chain,target.hash,"/logs"),initial.next_page_params);
-           if(next){
-             const more=await readJson(next);
-             if(Array.isArray(more.items)){eventLogs=eventLogs.concat(more.items);allLogs=!more.next_page_params;}
-           }
-         }
-         swapEvent=swapEventEvidence(eventLogs,{complete:allLogs});
-       }catch(_){swapEvent={present:false,complete:false,pools:[]};}
-     }
-     const verdict=classifySwapEvidence(tx,logs,target.wallet,token,{complete,swapEvent});
-     let native=null;
-     if(idx<3&&complete&&Array.isArray(logs)&&tx.result==="success"){
-       try{
-         msg(labels("Tracing ETH execution "+(idx+1)+"/3…","ETH 내부 실행 "+(idx+1)+"/3건 확인 중…"),"loading");
-         const sample=await loadTraceSample(innerTraceUrl(chain,target.hash),readJson,{pages:2});
-         native=inspectNativeSettlement(tx,logs,sample?.items||[],target.wallet,token,{complete:sample?.complete===true});
-       }catch(_){native={kind:"unverified",reason:"partial_internal_traces"};}
-     }
-     reports.push({...target,verdict,native});
-    }catch(e){failed++;reports.push({...target,verdict:{kind:"unverified",reason:"explorer_unavailable"}});}
-   }
-   let native=null,innerFunding=null;
-   if(creator&&isAddress(creator)){
-    try{const outer=await readJson(nativeUrl(chain,creator));if(job!==id)return;
-      native=directNativeFunding(outer,creator,context.holders,chain);
-      const selected=(Array.isArray(outer.items)?outer.items:[]).filter(t=>
-         t?.result==="success"&&key(t?.from?.hash)===key(creator)&&isHash(t?.hash)).slice(0,3);
-      innerFunding={checked:0,partial:0,hits:[]};
-      for(const outerTx of selected){
-        if(job!==id)return;
-        innerFunding.checked++;
-        msg(labels("Tracing creator-initiated ETH calls "+innerFunding.checked+"/"+selected.length+"…",
-          "생성자 시작 ETH 실행 "+innerFunding.checked+"/"+selected.length+"건 확인 중…"),"loading");
-        try{
-         const trace=await loadTraceSample(innerTraceUrl(chain,outerTx.hash),readJson,{pages:2});
-         if(!trace){innerFunding.partial++;continue;}
-         const result=creatorInitiatedNativeTraces(outerTx,{items:trace.items,next_page_params:trace.complete?null:{more:true}},
-           creator,context.holders,chain);
-         // Count trace-derived ETH receipts only where evidence was fetched. Mark incomplete pages.
-         if(!result.complete)innerFunding.partial++;
-         for(const hit of result.hits){
-          // If the same direct payment already appeared in the creator outer transactions, omit the duplicate.
-          if(native.items.some(x=>key(x.hash)===key(hit.hash)&&key(x.to)===key(hit.to)&&
-             hit.kind==="direct_internal_sender"))continue;
-          innerFunding.hits.push(hit);
-         }
-        }catch(_){innerFunding.partial++;}
-      }
-    }catch(e){}
-   }
-   if(job!==id)return;
-   output={events:reports,funding:native,innerFunding,failed};render();
-  }catch(e){if(job===id)msg(labels("Deep evidence lookup failed. No trade conclusion can be drawn.","심층 거래 조회 실패. 매매 여부를 판단할 수 없습니다."),"error");}
-  finally{if(id===job){busy=false;button.disabled=false;}}
+     return {direct,innerFunding};
+   }catch(_){return null;}
+  };
+  try{
+   const reviewed=await boundedMap(jobs,2,async(task,index)=>{
+    if(!live())return null;
+    const result=task.kind==="creator"?await traceCreator():await traceTarget(task.item,index);
+    if(live()){
+     finished++;
+     msg(labels("Evidence processed "+finished+"/"+jobs.length+"…",
+      "거래·자금 근거 "+finished+"/"+jobs.length+"건 처리…"),"loading");
+    }
+    return result;
+   });
+   if(!live())return;
+   const events=reviewed.filter((x,i)=>jobs[i].kind==="target"&&x!==null);
+   const creatorIndex=jobs.findIndex(x=>x.kind==="creator");
+   const result=creatorIndex>=0?reviewed[creatorIndex]:null;
+   const funding=result?.direct||null,innerFunding=result?.innerFunding||null;
+   output={events,funding,innerFunding,
+     failed:events.filter(x=>x.verdict.reason==="explorer_unavailable").length,
+     stats:{requests,elapsed:Date.now()-started,parallel:Math.min(2,jobs.length)}};
+   render();
+   window.dispatchEvent(new CustomEvent("yorbi:deepsample",{detail:{
+    chain,creator,direct:funding?.items||[],via:innerFunding?.hits||[]
+   }}));
+  }catch(_){
+   if(live())msg(labels("Limited evidence lookup failed. Results cannot be classified.",
+    "제한된 거래 근거 조회에 실패했습니다. 매매를 판정할 수 없습니다."),"error");
+  }finally{
+   if(id===job){busy=false;button.disabled=false;activeController=null;}
+  }
  }
  button.addEventListener("click",run);
  window.addEventListener("yorbi:scanstart",reset);

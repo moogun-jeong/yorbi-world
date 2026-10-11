@@ -225,6 +225,39 @@ Mobile verification: after PEPE Explorer/Safety Scan/Wallet Radar, click the sep
 Mobile smoke test: scan PEPE (Ethereum), run Wallet Radar, then deep transaction review. Check progress texts, existence of the "Creator-initiated ETH receipts through contracts" panel, inspect transaction links, verify generic token transfers are not labeled buys, and confirm a missing trace is **not** reported as "no ETH funding ever". The bounded sample may find no funding links; that is a valid result. Confirm Base and EN/KO, and inspect from an actual mobile browser before marking end-to-end proven.
 
 
+## Sprint 6.4 — fast evidence review and observed wallet link map (2026-10-11)
+
+**Free and read-only:** No GitHub Actions, no paid third-party API, AI backend, database, wallet connection, signature, or submitted transaction. Supported wallet-tracing chains remain **Ethereum and Base**.
+
+### Speed and reliability
+- Prior Sprint 6.3 deeply inspected as many as six wallet/transaction pairs **sequentially**, including transaction details, token-transfer pagination, DEX-style log pages, ETH execution traces, then creator-originated ETH funding. This could take substantial time on mobile/free public APIs.
+- Sprint 6.4 runs **at most two concurrent high-level jobs** (wallet transactions and creator trace), and **memoizes identical Blockscout URLs inside that individual scan**. Different watched wallets may use the same transaction hash; its transaction/trace details are requested once per URL, not once per wallet. The bounded reader caps requests at 64 unique URLs per scan.
+- A new token lookup aborts the previous in-flight deep scan; stale results may not overwrite newer results. Each HTTP request has a 12-second timeout; 429/CORS/network failure is shown as unavailable rather than a verified zero or successful trade.
+- Progress now reports completed high-level jobs; the response discloses distinct API request count and elapsed time. **No speedup percentage or latency SLA is claimed** until measured in actual devices and public providers.
+- Existing bounds remain: **up to six sampled wallet/transaction pairs**, token/Event/internal trace pages at most two, creator's three recent outer transactions for ETH trace review, only the first 50 holder records and up to three watched holders.
+
+### Evidence-only relationship map
+- New responsive SVG map with **token creator (GoPlus provider-reported)** and up to **three sampled non-contract holder addresses** from Blockscout. **Nodes do not establish real-world ownership**.
+- A graph arrow is drawn only with a **validated original transaction hash and a checked pair of addresses**, and each arrow is linked to the source Blockscout transaction:
+  - **Direct ERC-20** transfer between creator and watched holder.
+  - **Direct ETH** outer transaction or direct successful internal ETH transfer from creator to watched holder.
+  - **Creator-initiated, contract-mediated ETH receipt**, distinct **dashed** arrow. The actual ETH sender contract is shown separately. This **does not** mean the creator directly paid the recipient or controls their wallet.
+- Shared routers, token-holding similarity, exchange labels or coincidental same-pool activity create **no connection edges**.
+- If no creator is identified or no edge is found in a bounded sample, the UI says **unknown / no evidence in sample**, never "no related wallets".
+- Each user-triggered Wallet Radar run contributes direct token links. The optional user-triggered deep evidence review can additionally contribute direct ETH and creator-initiated contract-mediated ETH evidence.
+- URLs are restricted to `https://eth.blockscout.com/tx/<64-hex-hash>` or `https://base.blockscout.com/tx/<64-hex-hash>`. SVG nodes and evidence labels use `textContent`, avoiding arbitrary content injection.
+- No multi-hop clustering, beneficial-owner identification, decoded arbitrary router ABI, EIP-7702/4337 full execution, account attribution, insider manipulation, or complete transaction history is attempted.
+
+### Checks and acceptance
+
+Local unit suite (Node.js 20+):
+```bash
+node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs tests/wallet-graph.test.mjs
+```
+
+Mobile smoke test: select PEPE on Ethereum, run Wallet Radar, then the optional deep transaction review. The "Observed wallet transfer map" shows the creator and sampled holder nodes; source arrows appear only when a direct ERC-20/ETH move or verified creator-initiated mediated ETH receipt was encountered. Inspect each linked hash on Blockscout. Verify that a zero-arrow PEPE graph does not imply unrelated wallets. Repeat with Base. Switch English/Korean. Start another token scan before a long deep review finishes and confirm the old results do not appear. Compare elapsed times cautiously with prior builds, since provider response time, rate limits and sampled transactions vary.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

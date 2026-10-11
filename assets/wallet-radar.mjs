@@ -284,7 +284,7 @@ function initTracker(){
     }
     window.dispatchEvent(new CustomEvent("yorbi:walletsample",{detail:{
        chain,token:address,creator:creatorAddress,
-       holders:holderList.selected.map(w=>w.address),samples:sources.slice(0,8)
+       holders:holderList.selected.map(w=>w.address),tokenLinks:linked,samples:sources.slice(0,8)
     }}));
   }catch(err){
     if(job!==version)return;
