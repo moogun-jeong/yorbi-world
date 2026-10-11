@@ -93,9 +93,9 @@ export function observedChange(current,prior,metric){
   percent:baseline>0?diff/baseline*100:null,
   elapsedMs:current.checkedAt-prior.checkedAt};
 }
-export function listingPath(explorer){
+export function listingPath(explorer,cex=null){
  if(!explorer?.pair)return [];
- return [
+ const stages=[
   {step:"dex",en:"DEX liquidity pool",ko:"DEX 거래쌍",status:"observed",
    enNote:"One matching DEX pool is observed. This does NOT prove DEX-only status.",
    koNote:"일치하는 DEX 거래쌍 1개를 확인했습니다. DEX에만 상장됐다는 증거는 아닙니다."},
@@ -109,6 +109,26 @@ export function listingPath(explorer){
    enNote:"No listing promise, ETA, probability or verification.",
    koNote:"상장 보장·일정·확률을 추정하지 않습니다."}
  ];
+ if(!Array.isArray(cex?.results))return stages;
+ // This is a deliberately restricted exchange sample, not the whole CEX universe.
+ const apply=(stage,exchanges)=>{
+  const rows=cex.results.filter(r=>exchanges.includes(r.id));
+  const verified=rows.filter(r=>r.status==="contract_verified");
+  const candidates=rows.filter(r=>r.status==="ticker_market");
+  if(verified.length){
+   stage.status="contract_verified";
+   stage.enNote="Exact contract + active spot pair at "+verified.map(r=>r.name).join(", ")+". Other exchanges remain unverified.";
+   stage.koNote=verified.map(r=>r.name).join(", ")+"의 공식 자산 컨트랙트와 현물 마켓이 일치합니다. 다른 거래소는 미검증입니다.";
+  }else if(candidates.length){
+   stage.status="ticker_market";
+   stage.enNote="Spot pair with matching ticker at "+candidates.map(r=>r.name).join(", ")+", but contract identity NOT verified.";
+   stage.koNote=candidates.map(r=>r.name).join(", ")+"에서 같은 티커의 현물 거래쌍을 확인했지만 동일 컨트랙트인지는 미검증입니다.";
+  }
+ };
+ apply(stages[2],["kucoin"]);
+ apply(stages[3],["kraken","binance","coinbase"]);
+ apply(stages[4],["binance","coinbase"]);
+ return stages;
 }
 export function reviewGrowth(records,current){
  const matching=(Array.isArray(records)?records:[]).filter(r=>r?.key===current?.key);
@@ -178,7 +198,7 @@ function init(){
  const storage=getStore();
  let initialHistory="";
  try{initialHistory=storage?.getItem(GROWTH_KEY)||"";}catch(_){}
- let records=parseHistory(initialHistory),current=null,justScanned=false;
+ let records=parseHistory(initialHistory),current=null,justScanned=false,cex=null;
  const language=()=>document.documentElement.lang==="ko"?"ko":"en";
  const persist=()=>{if(storage)try{storage.setItem(GROWTH_KEY,JSON.stringify(records));}catch(_){}};
  function render(){
@@ -223,10 +243,13 @@ function init(){
   miniChart(chart,data.history,"marketCap");
   miniChart(holdersChart,data.history,"holderCount");
   path.replaceChildren();
-  for(const step of data.path){
+  for(const step of listingPath({pair:current?.pairAddress?{pairAddress:current.pairAddress}:null},cex)){
    const li=el("li","growth-stage");
    li.append(el("span","growth-stage-status "+(step.status==="observed"?"growth-observed":""),
-    step.status==="observed"?readable("Observed","확인"):readable("Not checked","미검증")));
+    step.status==="observed"?readable("Observed","확인"):
+    step.status==="contract_verified"?readable("Exact contract","컨트랙트 확인"):
+    step.status==="ticker_market"?readable("Ticker only","티커만 확인"):
+    readable("Not checked","미검증")));
    li.append(el("strong","",language()==="ko"?step.ko:step.en));
    li.append(el("small","",language()==="ko"?step.koNote:step.enNote));
    path.append(li);
@@ -236,7 +259,7 @@ function init(){
  function newScan(record){
   const sample=takeMarketSnapshot(record);
   if(!sample)return;
-  current=sample;justScanned=true;
+  current=sample;justScanned=true;cex=null;
   records=saveObservation(records,sample);
   persist();render();
  }
@@ -249,7 +272,7 @@ function init(){
   persist();render();
  }
  window.addEventListener("yorbi:scanstart",()=>{
-  current=null;justScanned=false;panel.hidden=true;
+  current=null;justScanned=false;cex=null;panel.hidden=true;
  });
  window.addEventListener("yorbi:cachechange",e=>{
   const {section,value}=e.detail||{};
@@ -260,13 +283,19 @@ function init(){
   const snapshot=takeMarketSnapshot(e.detail);
   if(!snapshot)return;
   current=records.filter(r=>r.key===snapshot.key&&r.checkedAt===snapshot.checkedAt).at(-1)||snapshot;
-  justScanned=false;render();
+  justScanned=false;cex=null;render();
  });
  window.addEventListener("yorbi:restore-security",e=>{
   // Restoration is not a new observation. Only display a previously saved holder value.
   if(!current||!e.detail||e.detail.time<current.checkedAt)return;
   const n=readHolderCount(e.detail,current);
   if(n!==null&&current.holderCount===null){current={...current,holderCount:n};render();}
+ });
+ window.addEventListener("yorbi:cexresult",e=>{
+  const report=e.detail;
+  if(!current||report?.chain!==current.chain||report.contract!==current.key||
+     !Array.isArray(report.results))return;
+  cex=report;render();
  });
  window.addEventListener("yorbi:languagechange",render);
  clear.addEventListener("click",()=>{

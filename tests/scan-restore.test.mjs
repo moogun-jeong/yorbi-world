@@ -44,7 +44,7 @@ test("security, radar, deep and period updates preserve original explorer record
 });
 test("unrecognized section is never saved as a new field",()=>{
  assert.equal(applyPart(base,"privateKey","confidential",now),null);
- assert.deepEqual(SCAN_PARTS,["explorer","security","radar","deep","period"]);
+ assert.deepEqual(SCAN_PARTS,["explorer","security","radar","deep","period","cex"]);
 });
 test("large deep analysis gracefully falls back to basic token and security record",()=>{
  const long="a".repeat(SCAN_MAX);

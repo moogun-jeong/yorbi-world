@@ -350,6 +350,26 @@ section[id]{scroll-margin-top:24px}
 .growth-clear{border:1px solid #d6ddea;background:transparent;border-radius:10px;padding:10px 13px;font-size:11px;color:#626f96;cursor:pointer}
 .growth-clear:focus-visible{outline:3px solid #a0b0da;outline-offset:2px}
 @media(max-width:720px){.growth-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.growth-visuals{grid-template-columns:1fr}.growth-metric strong{font-size:16px}.growth-stage{grid-template-columns:82px 1fr}}
+
+/* Sprint 6.9: source-backed exchange candidate/contract verification */
+.cex-check{margin-top:22px;padding-top:19px;border-top:1px solid #dfe6f2}
+.cex-check h4{font-size:15px;color:#324364;margin:5px 0 9px}
+.cex-check p{font-size:11px;line-height:1.75;color:#6e7e98}
+.cex-run{font-size:12px;font-weight:700;border:1px solid #bdccea;color:#3f5180;border-radius:11px;background:#f5f7ff;padding:11px 15px;cursor:pointer;max-width:100%}
+.cex-run:disabled{opacity:.55;cursor:not-allowed}
+.cex-run:focus-visible{outline:3px solid #a7b8de;outline-offset:2px}
+.cex-summary{font-size:12px!important;font-weight:700;color:#536485!important}
+.cex-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.cex-result{min-width:0;display:flex;flex-direction:column;gap:9px;border:1px solid #dfe5f2;border-radius:12px;padding:13px}
+.cex-result-head{display:flex;align-items:flex-start;flex-wrap:wrap;gap:6px 12px}
+.cex-result-head strong{font-size:12px;color:#364665}
+.cex-result-status{font-size:10px;color:#677894;border:1px solid #dce3ed;border-radius:8px;padding:4px 7px}
+.cex-contract_verified{border-color:#93bdab;color:#477e68}
+.cex-contract_mismatch{border-color:#d6aaa6;color:#91615c}
+.cex-ticker_market{border-color:#b9c6d8;color:#5e7390}
+.cex-result-explain{font-size:11px;color:#75829b;line-height:1.6;overflow-wrap:anywhere}
+.cex-original{font-size:11px;color:#5466ae;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:720px){.cex-results{grid-template-columns:1fr}.cex-run{width:100%}}
 </style>
 </head><body>
 <div class="topnote">✦ GENESIS CHAPTER &nbsp;·&nbsp; <b data-en="NO TOKEN HAS BEEN ISSUED" data-ko="아직 토큰이 발행되지 않았습니다">NO TOKEN HAS BEEN ISSUED</b> &nbsp;·&nbsp; ✦</div>
@@ -455,9 +475,18 @@ section[id]{scroll-margin-top:24px}
   </div>
   <div class="growth-listing-head">
     <h4 data-en="CEX listing path — verification status" data-ko="CEX 상장 단계 — 확인 상태">CEX listing path — verification status</h4>
-    <p data-en="A DEX pair is observed. This tool has NOT checked centralized-exchange markets, so neither DEX-only status nor any future listing can be claimed." data-ko="DEX 거래쌍은 확인됐지만 중앙화 거래소의 실제 상장 마켓을 조회하지 않았습니다. 따라서 DEX-only 여부나 향후 상장을 확정할 수 없습니다.">A DEX pair is observed. Centralized exchange listings are not checked.</p>
+    <p data-en="A DEX pair is observed. Optional official CEX spot-market checks below may find exact contract matches or ticker-only candidates. Neither DEX-only status nor future listings are inferred." data-ko="DEX 거래쌍이 확인됐습니다. 아래 공식 CEX 마켓 조회에서는 동일 컨트랙트 또는 단순 티커 일치를 구분합니다. DEX-only 여부나 미래 상장을 추정하지 않습니다.">A DEX pair is observed. Centralized exchange listings are not checked.</p>
   </div>
   <ol id="growth-listing" class="growth-listing"></ol>
+  <section id="cex-check" class="cex-check" hidden aria-label="Official CEX market data lookup">
+    <h4 data-en="Official CEX market checks (on demand)" data-ko="공식 CEX 마켓 확인 (버튼 조회)">Official CEX market checks (on demand)</h4>
+    <p data-en="Compare selected spot pairs on Binance, Coinbase, Kraken and KuCoin. Coinbase may verify the exact chain contract from official currency metadata. A matching ticker alone is NOT contract identity or proof of listing this token. This is not a full exchange-wide search." data-ko="Binance·Coinbase·Kraken·KuCoin의 선정된 현물 거래쌍을 조회합니다. Coinbase는 공식 자산 데이터로 체인·컨트랙트가 일치하는지 확인할 수 있습니다. 단순 티커 일치는 동일 코인 상장 확정이 아니며 모든 마켓을 조사하는 기능도 아닙니다.">Compare selected spot markets using official exchange sources.</p>
+    <button type="button" id="cex-run" class="cex-run" data-en="Check 4 exchanges via official APIs" data-ko="공식 API로 거래소 4곳 조회">Check 4 exchanges via official APIs</button>
+    <p id="cex-status" class="tracker-mini" role="status"></p>
+    <p id="cex-summary" class="cex-summary" aria-live="polite"></p>
+    <div id="cex-results" class="cex-results"></div>
+    <p class="tracker-mini" data-en="Checks PEPE-USDT/USD style selected pairs only; a missing pair does not mean no other CEX listing. Network, CORS or regional restrictions may prevent verification. Official CEX API calls originate from your browser, not a YORBI server. Data is cached with the latest lookup for up to 12 hours; refresh on demand." data-ko="선정된 티커의 USD/USDT 마켓만 검사합니다. 해당 마켓 미발견은 다른 CEX 마켓의 미상장을 뜻하지 않습니다. 국가 제한·CORS·API 장애 시 미확인으로 표시합니다. 공식 API는 브라우저에서 직접 호출하며 YORBI 서버를 경유하지 않습니다. 마지막 조회는 최대 12시간 기기에 보관되고, 최신 확인은 버튼을 다시 누르면 됩니다.">Only selected pairs and accessible sources are checked.</p>
+  </section>
   <div class="growth-foot">
     <p data-en="Market cap and FDV are different metrics. Rolling 24h volume is not cumulative trading activity. Liquidity is the selected pool, not guaranteed exit capacity. Holder counts come from GoPlus when reported. A change between scans is NOT a standardized 24h or 7d growth rate." data-ko="시가총액과 FDV는 다른 지표입니다. 24시간 거래량은 누적 거래량이 아니고, 유동성은 선택된 풀의 표시 수치일 뿐 실제 매도 가능 규모가 아닙니다. 홀더 수는 GoPlus 제공값 기준입니다. 조회 시점 간 변화율은 표준 24시간·7일 성장률이 아닙니다.">Market cap and FDV are different. Changes between scans are not standardized 24h or 7d growth rates.</p>
     <button type="button" id="growth-clear" class="growth-clear" data-en="Clear this token's local growth history" data-ko="이 토큰 성장 기록 지우기">Clear this token's local growth history</button>
@@ -737,6 +766,7 @@ section[id]{scroll-margin-top:24px}
 <script type="module" src="assets/wallet-graph.mjs?v=s65-20261011"></script>
 <script type="module" src="assets/wallet-report.mjs?v=restore-20261011"></script>
 <script type="module" src="assets/risk-synthesis.mjs?v=s67-20261011"></script>
-<script type="module" src="assets/moonshot-growth.mjs?v=s68-20261011"></script>
-<script type="module" src="assets/scan-restore.mjs?v=restore-20261011"></script>
+<script type="module" src="assets/moonshot-growth.mjs?v=s69-20261011"></script>
+<script type="module" src="assets/cex-markets.mjs?v=s69-20261011"></script>
+<script type="module" src="assets/scan-restore.mjs?v=s69-20261011"></script>
 </body></html>

@@ -6,7 +6,7 @@
 export const SCAN_KEY="yorbi:recent-scan:v1";
 export const SCAN_TTL=12*60*60*1000;
 export const SCAN_MAX=650000;
-export const SCAN_PARTS=Object.freeze(["explorer","security","radar","deep","period"]);
+export const SCAN_PARTS=Object.freeze(["explorer","security","radar","deep","period","cex"]);
 export function validSnapshot(snapshot,now=Date.now()){
  if(!snapshot||snapshot.version!==1||typeof snapshot.savedAt!=="number"||
     now<snapshot.savedAt||now-snapshot.savedAt>SCAN_TTL||!snapshot.parts||

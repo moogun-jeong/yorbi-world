@@ -370,6 +370,33 @@ Tests: `node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet
 On iPhone: (1) fresh PEPE scan displays one local observation and **no growth percent**, (2) GoPlus holder count appears only when provided, (3) re-scan at least 15 minutes later to produce an observed-time change, (4) test saved-snapshot reload does NOT invent additional growth observations, (5) inspect explicit "DEX-only unverified"/all CEX statuses unknown, and (6) clear this token's growth history and confirm it does not affect other token records. Verify English/Korean. Static/unit tests cannot prove iOS browser localStorage persists across different apps or isolated in-app browser containers.
 
 
+## Sprint 6.9 — official CEX spot markets, exact contract vs ticker-only evidence (2026-10-11)
+
+**Status:** Free optional user-triggered verification of a **restricted spot market sample**. Public REST endpoints from Binance, Coinbase, Kraken and KuCoin; no API keys, paid plans, GitHub Actions, backend database, wallet signature, token issuance or automatically scheduled polls.
+
+### Sources and methodology
+- **Binance Spot** — official Binance public market-data host `data-api.binance.vision`, `GET /api/v3/exchangeInfo?symbol={BASE}USDT`, require exact `baseAsset`, `quoteAsset`, spot-enabled and `TRADING` status. An exact ticker pair is only **ticker-market evidence**, not proof of the Ethereum/Base/Solana contract; status `BREAK` is not currently trading. Normal `api.binance.com` may return HTTP 451 depending on region, and official market-data endpoints can also fail due to API/CORS/network restrictions. Never interpret a failed request as delisting.
+- **Coinbase Exchange** — public `GET /products/{BASE}-USD` plus `GET /currencies/{BASE}`. A product must be exactly online and have the requested base/quote. If a matching `supported_networks[].id` AND `contract_address` exists on Coinbase's official currency metadata, the **chain+contract match** is explicitly marked **verified on that spot product**. If Coinbase's supported network contract differs for that same chain, it is marked **different contract**; if identity fields are missing, the result remains **ticker-only**, not verified. Note that tokens with same ticker may represent different contracts.
+- **Kraken** — public `GET /0/public/AssetPairs?pair={BASE}USD`, require an exact reported `wsname` and `online` pair status. Does NOT return the target token's contract identity in this market response; **ticker-only**.
+- **KuCoin Spot** — public `GET /api/v2/symbols/{BASE}-USDT`; require `code=200000`, exact `baseCurrency`/`quoteCurrency` and `enableTrading=true`. Does NOT establish the contract identity; **ticker-only**.
+
+Checks are scoped to **one configured quote pair per venue**, plus one optional Coinbase asset/network metadata request: **5 HTTP requests**, concurrency capped at **2**, client-side **9-second timeout**, with user-visible progress. A missing pair is **"selected pair not found"**, never "not listed on this exchange." The ticker must match `[A-Za-z0-9]{2,15}`; unsupported tickers are not looked up. Network/CORS/HTTP 451/rate limit failures remain **unavailable**, not an absence verdict.
+
+### Integrated experience
+- In the Moonshot growth section, a **Check 4 exchanges via official APIs** button explicitly starts the lookup. The four evidence cards link to their exact official API response URLs and distinguish **contract verified**, **ticker-only spot pair**, **different chain contract**, **paused market**, **selected pair absent** and **unavailable**.
+- Update the conceptual **DEX → small CEX → mid-size CEX → major CEX → Binance/Coinbase** path using only the observed sampled markets; **unknown stages remain unknown** and DEX-only status is **never presumed**. Tier labels are illustrative, not authoritative exchange rankings.
+- The CEX snapshot is stored with the single latest **12-hour browser-local recovery snapshot**, keyed to the exact chain+token+symbol. Restoring an earlier result does **not** issue any API requests; the user must click again for fresh results. New token searches cancel in-flight CEX probes and clear stale reports; the browser does not upload or share a user's queries with YORBI servers.
+- This is **not full CEX coverage**, not a prediction of listing probabilities, upside, listing date or a forecast. A Binance ticker match does not prove that a particular microcap contract has already been listed; only an authoritative exact chain+contract match can do that.
+- Remote official APIs can have **browser CORS limitations** even if server-to-server queries succeed; such results show **unavailable**, and original official API links remain available for manual checking.
+
+Tests:
+```bash
+node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs tests/wallet-graph.test.mjs tests/wallet-report.test.mjs tests/scan-restore.test.mjs tests/wallet-execution.test.mjs tests/risk-synthesis.test.mjs tests/moonshot-growth.test.mjs tests/cex-markets.test.mjs
+```
+
+On-device verification: scan Ethereum PEPE and press the official CEX button. Coinbase's official `/currencies/PEPE` lists Ethereum contract `0x6982508145454ce325ddbe47a25d4ec3d2311933` and can support **exact-contract** verification if the public browser fetch succeeds. Binance, Kraken and KuCoin should not imply contract confirmation from ticker alone. Verify no CEX false-negative is produced on 404/451/CORS failures, check 12-hour restore, switching token/chain, previous Moonshot history and KO/EN language toggle. Public endpoint responses and access may change; unit tests do not prove mobile CORS success.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

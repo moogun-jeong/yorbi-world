@@ -148,3 +148,32 @@ test("two observations in the same selected DEX pool retain volume/liquidity com
  assert.equal(observedChange(current,prior,"volume24h").percent,0);
  assert.equal(observedChange(current,prior,"liquidity").percent,0);
 });
+
+test("official Coinbase exact contract match updates Tier1/Binance-Coinbase stage only",()=>{
+ const cb={id:"coinbase",name:"Coinbase",status:"contract_verified"};
+ const result=listingPath({pair:{pairAddress:"0x"+"f".repeat(40)}},{results:[cb]});
+ assert.equal(result[0].status,"observed");
+ assert.equal(result[1].status,"unknown");
+ assert.equal(result[2].status,"unknown");
+ assert.equal(result[3].status,"contract_verified");
+ assert.equal(result[4].status,"contract_verified");
+ assert.match(result[4].koNote,/컨트랙트/);
+});
+test("Binance or KuCoin ticker-only CEX match does NOT become verified on-chain listing",()=>{
+ const path=listingPath({pair:{pairAddress:"0x"+"f".repeat(40)}},{results:[
+  {id:"binance",name:"Binance",status:"ticker_market"},
+  {id:"kucoin",name:"KuCoin",status:"ticker_market"}
+ ]});
+ assert.equal(path[2].status,"ticker_market");
+ assert.equal(path[3].status,"ticker_market");
+ assert.equal(path[4].status,"ticker_market");
+ assert.match(path[4].koNote,/미검증/);
+});
+test("unavailable, untested and missing quote pairs do not imply CEX delisting",()=>{
+ const path=listingPath({pair:{pairAddress:"0x"+"f".repeat(40)}},{results:[
+  {id:"binance",name:"Binance",status:"unavailable"},
+  {id:"coinbase",name:"Coinbase",status:"not_found_pair"}
+ ]});
+ assert.equal(path[4].status,"unknown");
+ assert.equal(path[1].status,"unknown");
+});
