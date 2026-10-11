@@ -1,0 +1,44 @@
+name: YORBI Phantom Devnet Lab CI
+
+on:
+  push:
+    branches:
+      - feat/yorbi-phantom-devnet-web-lab
+    paths:
+      - 'devnet-lab/**'
+      - '.github/workflows/yorbi-phantom-devnet-lab-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: devnet-lab
+    steps:
+      - name: Fetch source
+        uses: actions/checkout@v4
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install SDK and Vite without running package scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: JS syntax check
+        run: |
+          node --check src/main.mjs
+          node --check src/config.mjs
+      - name: Safety unit tests
+        run: npm test
+      - name: Build browser bundle
+        run: npm run build
+      - name: Upload static site for preview (does not deploy or sign)
+        uses: actions/upload-artifact@v4
+        with:
+          name: yorbi-phantom-devnet-dist
+          path: devnet-lab/dist
+          retention-days: 7

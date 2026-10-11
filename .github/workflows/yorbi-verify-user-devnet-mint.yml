@@ -1,0 +1,31 @@
+name: YORBI Read-Only Devnet Mint Verification
+
+on:
+  push:
+    branches:
+      - feat/yorbi-phantom-devnet-web-lab
+    paths:
+      - .github/workflows/yorbi-verify-user-devnet-mint.yml
+      - devnet-lab/scripts/verify-screenshot-mint.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  onchain-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: devnet-lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Solana read-only client
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Check verification script
+        run: node --check scripts/verify-screenshot-mint.mjs
+      - name: Independently verify reported Mint transaction and Token-2022 data
+        run: node scripts/verify-screenshot-mint.mjs
