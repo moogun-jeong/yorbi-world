@@ -6,6 +6,7 @@ on:
       - feat/yorbi-phantom-devnet-web-lab
     paths:
       - .github/workflows/yorbi-verify-user-devnet-mint.yml
+      - devnet-lab/scripts/verify-screenshot-mint.mjs
 
 permissions:
   contents: read
