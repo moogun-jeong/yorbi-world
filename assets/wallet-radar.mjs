@@ -142,10 +142,10 @@ function initTracker(){
  const scope=document.getElementById("tracker-scope");
  const creatorBlock=document.getElementById("tracker-creator");
  const summary=document.getElementById("tracker-summary");
- let context=null,creator=null,last=null,version=0,busy=false;
+ let context=null,creator=null,last=null,lastSample=null,version=0,busy=false;
  function message(text,kind="info"){status.textContent=text;status.dataset.kind=kind;}
  function clear(){
-   version++;context=null;creator=null;last=null;busy=false;
+   version++;context=null;creator=null;last=null;lastSample=null;busy=false;
    cards.replaceChildren();connections.replaceChildren();summary.hidden=true;
    panel.hidden=true;btn.disabled=false;
  }
@@ -282,7 +282,7 @@ function initTracker(){
         if(ev)sources.push({wallet:rec.address,hash:ev.hash});
       }
     }
-    window.dispatchEvent(new CustomEvent("yorbi:walletsample",{detail:{
+    lastSample={
        chain,token:address,creator:creatorAddress,
        holders:holderList.selected.map(w=>w.address),tokenLinks:linked,samples:sources.slice(0,8),
        walletRecords:transfers.filter(x=>!x.error&&Array.isArray(x.raw)).map(x=>({
@@ -295,6 +295,10 @@ function initTracker(){
            log_index:item.log_index??item.index??null
          }))
        }))
+    };
+    window.dispatchEvent(new CustomEvent("yorbi:walletsample",{detail:lastSample}));
+    window.dispatchEvent(new CustomEvent("yorbi:cachechange",{detail:{
+      section:"radar",value:{context,last,creator,lastSample}
     }}));
   }catch(err){
     if(job!==version)return;
@@ -319,6 +323,21 @@ function initTracker(){
    if(context&&toKey(e.detail?.address)===toKey(context.address)&&e.detail?.chain===context.chain){
      creator=hexAddress.test(e.detail.creator)?e.detail.creator:null;
    }
+ });
+ window.addEventListener("yorbi:restore-radar",event=>{
+   const state=event.detail;
+   if(!state?.context||!state?.last?.holderList||!state.lastSample||
+      !hexAddress.test(state.context.address)||!TRACKER_HOSTS[state.context.chain])return;
+   const currentChain=document.querySelector("#scan-chain")?.value;
+   const currentAddress=document.querySelector("#scan-address")?.value?.trim();
+   if(currentChain!==state.context.chain||toKey(currentAddress)!==toKey(state.context.address)||
+      toKey(state.lastSample.token)!==toKey(state.context.address))return;
+   clear();
+   context=state.context;last=state.last;lastSample=state.lastSample;
+   creator=hexAddress.test(state.creator)?state.creator:null;
+   panel.hidden=false;
+   render();
+   window.dispatchEvent(new CustomEvent("yorbi:walletsample",{detail:lastSample}));
  });
  window.addEventListener("yorbi:languagechange",()=>{if(last)render();else if(context)message(
   context.chain in TRACKER_HOSTS?ui("Ready to check recent on-chain records.","최근 온체인 기록 조회 준비 완료."):

@@ -78,7 +78,7 @@ Cloudflare guide: https://developers.cloudflare.com/pages/configuration/git-inte
 - `marketCap` and `fdv` are distinct data fields; missing data is displayed as `—`, never guessed as 0.
 - No contract inspection, honeypot detection, source verification, creator tracing, insider analysis, CEX listing predictions, wallet connection, automated trading, AI analysis, or financial advice is provided.
 - The browser accesses an external public REST API only when the visitor initiates a lookup. There is **no paid key, server, database, private wallet data or background polling**. Provider network/CORS restrictions may block some browsers and will show an error message instead of invented numbers.
-- No user search history is stored by our website. The external provider necessarily sees each requested token/chain and network request metadata. Free API usage is subject to its own rate limits and availability.
+- The most recent public lookup may be stored locally in the visitor's browser for up to 12 hours to recover from navigation; no search history is uploaded to a YORBI server. The external provider necessarily sees each requested token/chain and network request metadata. Free API usage is subject to its own rate limits and availability.
 - YORBI itself **has no issued official token**. Third-party tokens are examples only, not endorsements.
 
 ### Testing and verification
@@ -215,7 +215,7 @@ Mobile verification: after PEPE Explorer/Safety Scan/Wallet Radar, click the sep
 - Sprint 6.2's swap-call attribution is tightened: to label a watched wallet's stronger swap-trade evidence, require **the wallet to be the successful outer transaction initiator**, plus an explicit recognized swap method and opposing ERC-20 movement. If an external router/bundler initiated the outer transaction, downgrade to **swap context**, not a verified buy/sell. Token transfers alone never prove buying or selling.
 - Visible status advances during slow bounded trace lookup; raw transaction links remain available; English/Korean explanations are retained and the UI shows an extra contract-mediated funding sample.
 - Non-goals: arbitrary router ABI recursion, fee-escrow provenance, complete internal call tree of all addresses, EIP-7702/4337 bundles, Uniswap v4-specific decoding, 24-hour trade statistics, CEX wallet affiliation, chain-wide related wallets, holder beneficial ownership, profit calculations or trustless liquidation tests.
-- User browser directly calls the public **Blockscout REST v2** on demand. External providers see requested chain/address and network request metadata. No user search history is stored by the YORBI frontend. Free tiers / CORS / latency can limit access.
+- User browser directly calls the public **Blockscout REST v2** on demand. External providers see requested chain/address and network request metadata. The frontend can cache one public result in this browser for up to 12 hours for page restoration, without remote server storage. Free tiers / CORS / latency can limit access.
 - **No GitHub Actions workflows are introduced**. Cloudflare Workers Builds remains the repository-connected deployment mechanism.
 
 ### Validation
@@ -271,7 +271,7 @@ Mobile smoke test: select PEPE on Ethereum, run Wallet Radar, then the optional 
 ### Export and sharing
 - A **Download sample JSON** button produces a portable, versioned `yorbi-wallet-sample-v1` file with chain/contract, reported creator if any, generated UTC time, time-window, sample limitations, grouped movement records, original Blockscout tx citations, bounded classification evidence and graph edges.
 - A **Copy text summary** button copies a concise EN/KO summary for sharing. It does **not** generate a public link, upload a dataset or place wallets in a remote database.
-- The browser does not automatically persist results. Export is an explicit user action; copied/shared records contain publicly visible wallet addresses and contract details. Visitors should inspect downloaded JSON before publishing.
+- The latest browser-local analysis snapshot is retained for up to 12 hours so results can be restored, but server export remains an explicit user action; copied/shared records contain publicly visible wallet addresses and contract details. Visitors should inspect downloaded JSON before publishing.
 - Updating the analyzed chain or token clears previous report state and evidence. Evidence/graph updates must match both chain and token contract to avoid stale classifications leaking between scans.
 
 ### Caveats
@@ -285,7 +285,24 @@ Mobile smoke test: select PEPE on Ethereum, run Wallet Radar, then the optional 
 node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs tests/wallet-graph.test.mjs tests/wallet-report.test.mjs
 ```
 
-Mobile acceptance: scan PEPE (Ethereum), run Wallet Radar, inspect the 24h/7d/sample time selector; inspect selected UTC dates and individual wallet inflows/outflows. Optionally run deep trade-evidence review and check the classified evidence counts. Download a JSON report and verify time/source addresses with public Blockscout transactions, copy the EN/KO text report and ensure browser does not automatically publish or store results. Re-scan a Base token and verify old evidence does not appear. Confirm source URL allowlist and no extra requests for period toggles. Device browser file download and clipboard success are **not established by static/unit tests**.
+Mobile acceptance: scan PEPE (Ethereum), run Wallet Radar, inspect the 24h/7d/sample time selector; inspect selected UTC dates and individual wallet inflows/outflows. Optionally run deep trade-evidence review and check the classified evidence counts. Download a JSON report and verify time/source addresses with public Blockscout transactions, copy the EN/KO text report and confirm no automatic server upload or publication (a 12-hour browser-local recovery cache is permitted). Re-scan a Base token and verify old evidence does not appear. Confirm source URL allowlist and no extra requests for period toggles. Device browser file download and clipboard success are **not established by static/unit tests**.
+
+
+## Sprint 6.5.1 — recover recent scan after mobile popup, navigation or tab reload (2026-10-11)
+
+**Motivation:** On mobile Safari and in-app browsers, closing an external transaction popup or returning from another view may reload the YORBI site, which previously stored lookup state only in JavaScript memory. The full Explorer/Safety Scan/Wallet Radar/Deep Evidence/Graph/Report UI could revert to its pre-lookup state.
+
+**Fix:**
+- Automatically cache the latest **public read-only lookup snapshot** in this origin's **browser localStorage**, where available; **12-hour expiry**, single recent analysis, maximum **650 KB**. This is browser-local storage, **not a YORBI server/database or network upload**. External providers see only existing user-triggered API calls.
+- Persist successful **Explorer** DEX pair record, **GoPlus** interpreted risk report, **Wallet Radar** bounded holder/transfer sample, **optional deep evidence** bounded results and **time-window selection**. Any unsupported/oversize record falls back to basic Explorer and Safety Scan rather than storing partial potentially misleading deep results.
+- On re-entering/reloading the same website origin, recreate the result cards from the cached **same chain/contract** and dispatch the existing in-page evidence events in dependency order to restore graph, report and deep classification. **No automatic re-query or new Blockscout/GoPlus/DEX API requests** are made during restoration.
+- Keep the approximate **scroll position** and which detail accordions were open. A banner clearly states "**restored snapshot, not live prices**"; original query timestamps remain visible. The visitor may explicitly re-scan for fresh data.
+- The new **Clear saved results** button removes the local cached snapshot and reloads the clean lookup page. Starting a new user-requested token scan invalidates the previous cache.
+- Cached public wallet addresses, token contracts and transaction references are visible to anyone who can access the same browser profile. Users of shared devices should clear saved results, and private mode/storage-disabled browsers may not support recovery. Cross-origin in-app browser containers can have different storage and are not guaranteed to share cached results.
+- This feature does **not** preserve streaming/incomplete API requests; only completed parts of the analysis are saved. It cannot guarantee preservation if an iOS browser process closes before the cache can be written, if device storage is cleared, or if the page is reopened in an isolated browser container.
+- No wallet connection, authorization, transaction signing, backend, paid API, GitHub Actions workflow or account login is introduced.
+
+Validation: Run the full existing unit suite plus `tests/scan-restore.test.mjs`; manually scan PEPE in mobile Safari, expand transaction evidence, open a Blockscout link, return to YORBI and check the same token, report, selected period, visible location and risk indicators. Force a full tab reload and check the restored notice. Check **Clear saved results**. Re-run a different token and ensure old contract evidence is never mixed in. No source-level test guarantees iOS popup/tab lifecycle behavior; confirm on device.
 
 
 ## Development priorities

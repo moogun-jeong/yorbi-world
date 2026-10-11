@@ -461,6 +461,9 @@ function initDeep(){
      failed:events.filter(x=>x.verdict.reason==="explorer_unavailable").length,
      stats:{requests,elapsed:Date.now()-started,parallel:Math.min(2,jobs.length)}};
    render();
+   window.dispatchEvent(new CustomEvent("yorbi:cachechange",{detail:{
+    section:"deep",value:{context,output}
+   }}));
    window.dispatchEvent(new CustomEvent("yorbi:deepsample",{detail:{
     chain,token,creator,direct:funding?.items||[],via:innerFunding?.hits||[],
     events:output.events.map(x=>({wallet:x.wallet,hash:x.hash,verdict:x.verdict}))
@@ -482,6 +485,22 @@ function initDeep(){
    holders:Array.isArray(holders)?holders.filter(isAddress).slice(0,3):[],samples};
   section.hidden=false;
   msg(labels("Ready. Click for individual transaction evidence (bounded and on demand).","준비됐습니다. 버튼을 누르면 제한된 거래별 근거를 확인합니다."),"info");
+ });
+ window.addEventListener("yorbi:restore-deep",event=>{
+   const state=event.detail;
+   if(!state?.context||!state?.output||!Array.isArray(state.output.events)||
+      !EVM_EXPLORERS[state.context.chain]||!isAddress(state.context.token))return;
+   const currentChain=document.querySelector("#scan-chain")?.value;
+   const currentAddress=document.querySelector("#scan-address")?.value?.trim();
+   if(currentChain!==state.context.chain||key(currentAddress)!==key(state.context.token))return;
+   reset();context=state.context;output=state.output;
+   section.hidden=false;
+   render();
+   window.dispatchEvent(new CustomEvent("yorbi:deepsample",{detail:{
+    chain:context.chain,token:context.token,creator:context.creator,
+    direct:output.funding?.items||[],via:output.innerFunding?.hits||[],
+    events:output.events.map(x=>({wallet:x.wallet,hash:x.hash,verdict:x.verdict}))
+   }}));
  });
  window.addEventListener("yorbi:languagechange",()=>{if(output)render();else if(context)msg(labels("Ready for evidence review.","거래 근거 조회 준비 완료."))});
 }

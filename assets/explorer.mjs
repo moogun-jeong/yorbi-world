@@ -116,6 +116,7 @@ function initExplorer(){
      if(!found){setStatus(t("No matching DEX pair with this token as its base was reported. This does not mean the token does not exist.","요청한 토큰이 기준 토큰으로 표시된 DEX 거래쌍을 찾지 못했습니다. 토큰이 존재하지 않는다는 뜻은 아닙니다."),"info");return;}
      last={...found,chain,address,date:Date.now()};
      render(last);
+     window.dispatchEvent(new CustomEvent("yorbi:cachechange",{detail:{section:"explorer",value:last}}));
      window.dispatchEvent(new CustomEvent("yorbi:scanresult",{detail:{chain,address}}));
      setStatus(t("Data received. Displaying the highest-liquidity matching pair.","조회 완료. 일치하는 거래쌍 중 표시 유동성이 가장 큰 거래쌍을 보여줍니다."),"ok");
    }catch(err){
@@ -130,6 +131,17 @@ function initExplorer(){
    select.value="ethereum";
    field.value="0x6982508145454Ce325dDbE47a25d4Ec3d2311933";
    scan();
+ });
+ window.addEventListener("yorbi:restore-explorer",event=>{
+   const record=event.detail;
+   if(!record||!validAddress(record.chain,record.address)||!record.pair||
+      !Number.isFinite(Number(record.date)))return;
+   select.value=record.chain;
+   field.value=record.address;
+   last=record;
+   render(last);
+   setStatus(t("Restored a recent saved lookup. Data may be outdated; rescan for fresh information.",
+     "최근 조회 결과를 이 기기에서 복원했습니다. 저장된 데이터이므로 최신 정보가 필요하면 다시 조회하세요."),"ok");
  });
  window.addEventListener("yorbi:languagechange",()=>{
    if(last){

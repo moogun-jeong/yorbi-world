@@ -240,7 +240,18 @@ function setup(){
   if(!context||ev.detail?.chain!==context.chain||lowered(ev.detail?.token)!==lowered(context.token))return;
   graph=ev.detail.graph||null;render();
  });
- select.addEventListener("change",()=>{if(context)render();});
+ select.addEventListener("change",()=>{
+  if(context){
+   render();
+   window.dispatchEvent(new CustomEvent("yorbi:cachechange",{detail:{section:"period",value:select.value}}));
+  }
+ });
+ window.addEventListener("yorbi:restore-period",event=>{
+  const period=event.detail;
+  if(!["24h","7d","sample"].includes(period))return;
+  select.value=period;
+  if(context)render();
+ });
  save.addEventListener("click",()=>{
   if(!last||!context)return;
   const blob=new Blob([JSON.stringify(last,null,2)+"\n"],{type:"application/json"});

@@ -298,6 +298,12 @@ section[id]{scroll-margin-top:24px}
 .tracker-report-action:disabled{opacity:.5;cursor:not-allowed}
 .tracker-report-action:focus-visible,.tracker-report-controls select:focus-visible{outline:3px solid #98a6de;outline-offset:2px}
 @media(max-width:740px){.tracker-report-grid{grid-template-columns:1fr}.tracker-report-actions{flex-direction:column}.tracker-report-action{width:100%}}
+/* Recent scan recovery - visible only if a local snapshot was restored */
+.scan-restored{margin:14px 0;padding:14px 17px;background:#eef4ff;color:#4c608d;border:1px solid #d5e3fa;border-left:4px solid #7f93ca;border-radius:12px;font-size:12px;line-height:1.8;display:flex;align-items:flex-start;gap:9px}
+.scan-restored[hidden],.scan-clear[hidden]{display:none!important}
+.scan-clear{background:#fff;color:#68769b;border:1px solid #ccd6e9;border-radius:11px;font-size:12px;font-weight:700;padding:10px 14px;margin:8px 0 12px;cursor:pointer}
+.scan-clear:focus-visible{outline:3px solid #99a8dd;outline-offset:2px}
+@media(max-width:740px){.scan-clear{width:100%;min-height:40px}.scan-restored{font-size:12px}}
 </style>
 </head><body>
 <div class="topnote">✦ GENESIS CHAPTER &nbsp;·&nbsp; <b data-en="NO TOKEN HAS BEEN ISSUED" data-ko="아직 토큰이 발행되지 않았습니다">NO TOKEN HAS BEEN ISSUED</b> &nbsp;·&nbsp; ✦</div>
@@ -362,6 +368,11 @@ section[id]{scroll-margin-top:24px}
    </form>
    <div class="scan-extras"><p id="scan-hint" data-en="No wallet connection. Nothing is bought or sold. Only published DEX data is requested." data-ko="지갑 연결·매수·매도 없이 공개 DEX 데이터만 조회합니다.">No wallet connection. Nothing is bought or sold. Only published DEX data is requested.</p><button type="button" id="scan-demo" class="demo-button" data-en="Try example: PEPE (Ethereum) ↗" data-ko="예시 조회: PEPE (Ethereum) ↗">Try example: PEPE (Ethereum) ↗</button></div>
    <p id="scan-status" role="status" aria-live="polite" data-kind="info">Ready for a token address.</p>
+   <div id="scan-restored" class="scan-restored" hidden role="status">
+     <span aria-hidden="true">↺</span>
+     <span data-en="Recent lookup restored on this device (saved for up to 12 hours). The numbers are a snapshot, NOT live prices. Re-scan for fresh results." data-ko="이 기기의 최근 조회 화면을 복원했습니다(최대 12시간 보관). 표시 수치는 저장된 시점의 자료이며 실시간 가격이 아닙니다. 최신 결과는 다시 조회하세요.">Recent lookup restored on this device (saved for up to 12 hours). The numbers are a snapshot, NOT live prices. Re-scan for fresh results.</span>
+   </div>
+   <button type="button" id="scan-clear" class="scan-clear" hidden data-en="Clear saved results" data-ko="저장된 조회 결과 지우기">Clear saved results</button>
    <div id="scan-results" hidden>
      <div class="scan-result-top"><div><span class="scan-small-label" data-en="TOKEN FOUND ON A PUBLIC DEX" data-ko="공개 DEX 거래쌍에서 확인한 토큰">TOKEN FOUND ON A PUBLIC DEX</span><h3 id="scan-token"></h3><p class="scan-address" id="scan-contract"></p></div><div class="pair-info"><span id="scan-selected-chain"></span><span id="scan-pair"></span></div></div>
      <div class="scan-results-grid">
@@ -528,7 +539,7 @@ section[id]{scroll-margin-top:24px}
     <button type="button" id="report-copy" class="tracker-report-action" disabled data-en="Copy text summary" data-ko="텍스트 요약 복사">Copy text summary</button>
   </div>
   <p id="report-status" class="tracker-mini" role="status" aria-live="polite"></p>
-  <p class="tracker-disclaimer" data-en="The browser does not automatically store or publish this report. Exported JSON contains public token contract, wallet addresses and source transaction hashes: review before sharing. Time ranges filter ALREADY-FETCHED transfers (up to 50 records per wallet, first Blockscout page); 0 events is not proof of no trading. No balance history, profit estimation, ownership clustering, CEX trades or full token lifetime audit is provided." data-ko="브라우저가 이 보고서를 자동 저장·공개하지 않습니다. 내려받은 JSON에는 공개 컨트랙트·지갑 주소·거래 해시가 포함되므로 공유 전에 내용을 확인하세요. 기간 필터는 이미 가져온 지갑별 첫 페이지 최대 50건에만 적용됩니다. 0건도 실제 거래가 없다는 의미는 아닙니다. 잔고 변동 이력·실현손익·실소유자 군집·CEX 매매·전체 발행 이후 감사는 제공하지 않습니다.">The browser does not automatically store or publish this report. Exported JSON contains public token contract, wallet addresses and source transaction hashes: review before sharing. Time ranges filter ALREADY-FETCHED transfers (up to 50 records per wallet, first Blockscout page); 0 events is not proof of no trading.</p>
+  <p class="tracker-disclaimer" data-en="The recent lookup and public on-chain evidence are saved in this browser for up to 12 hours for page recovery; they are never uploaded or automatically shared. Exported JSON contains public token contract, wallet addresses and source transaction hashes: review before sharing. Time ranges filter ALREADY-FETCHED transfers (up to 50 records per wallet, first Blockscout page); 0 events is not proof of no trading. No balance history, profit estimation, ownership clustering, CEX trades or full token lifetime audit is provided." data-ko="조회 화면 복원을 위해 최근 공개 온체인 자료를 이 기기의 브라우저에 최대 12시간 저장합니다. 서버에는 업로드하거나 자동 공유하지 않습니다. 내려받은 JSON에는 공개 컨트랙트·지갑 주소·거래 해시가 포함되므로 공유 전에 내용을 확인하세요. 기간 필터는 이미 가져온 지갑별 첫 페이지 최대 50건에만 적용됩니다. 0건도 실제 거래가 없다는 의미는 아닙니다. 잔고 변동 이력·실현손익·실소유자 군집·CEX 매매·전체 발행 이후 감사는 제공하지 않습니다.">The browser does not automatically store or publish this report. Exported JSON contains public token contract, wallet addresses and source transaction hashes: review before sharing. Time ranges filter ALREADY-FETCHED transfers (up to 50 records per wallet, first Blockscout page); 0 events is not proof of no trading.</p>
 </section>
   </div>
 </section>
@@ -630,10 +641,11 @@ section[id]{scroll-margin-top:24px}
   window.addEventListener("resize",()=>{if(window.innerWidth>900)setMenu(false);});
 })();
 </script>
-<script type="module" src="assets/explorer.mjs"></script>
-<script type="module" src="assets/security.mjs"></script>
-<script type="module" src="assets/wallet-radar.mjs?v=s65-20261011"></script>
-<script type="module" src="assets/wallet-evidence.mjs?v=s65-20261011"></script>
+<script type="module" src="assets/explorer.mjs?v=restore-20261011"></script>
+<script type="module" src="assets/security.mjs?v=restore-20261011"></script>
+<script type="module" src="assets/wallet-radar.mjs?v=restore-20261011"></script>
+<script type="module" src="assets/wallet-evidence.mjs?v=restore-20261011"></script>
 <script type="module" src="assets/wallet-graph.mjs?v=s65-20261011"></script>
-<script type="module" src="assets/wallet-report.mjs?v=s65-20261011"></script>
+<script type="module" src="assets/wallet-report.mjs?v=restore-20261011"></script>
+<script type="module" src="assets/scan-restore.mjs?v=restore-20261011"></script>
 </body></html>

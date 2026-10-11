@@ -271,8 +271,9 @@ function initSafety(){
    const data=await resp.json();if(id!==requestId)return;
    const token=extractToken(data,chain,address);
    if(!token){showStatus(translated("No provider record. Token safety is unknown.","제공된 보안 분석 결과가 없어 안전 여부는 미확인입니다."),"unknown");return;}
-   last={report:evaluateSecurity(token,chain),time:Date.now(),chain};
+   last={report:evaluateSecurity(token,chain),time:Date.now(),chain,address};
    render();
+   window.dispatchEvent(new CustomEvent("yorbi:cachechange",{detail:{section:"security",value:last}}));
    // Pass verified provider-reported metadata to read-only wallet analysis; no ownership inference.
    window.dispatchEvent(new CustomEvent("yorbi:securityresult",{detail:{chain,address,creator:last.report.creator,owner:last.report.owner}}));
   }catch(err){
@@ -298,6 +299,19 @@ function initSafety(){
  });
  window.addEventListener("yorbi:scanstart",reset);
  window.addEventListener("yorbi:scanresult",e=>{if(e.detail?.chain&&e.detail?.address)scan(e.detail);});
+ window.addEventListener("yorbi:restore-security",event=>{
+   const value=event.detail;
+   if(!value||!value.report||!Object.hasOwn(CODES,value.chain)||
+     typeof value.address!=="string"||!value.address||
+     !Number.isFinite(Number(value.time)))return;
+   reset();
+   last=value;panel.hidden=false;
+   provider.href=providerEndpoint(value.chain,value.address);
+   render();
+   window.dispatchEvent(new CustomEvent("yorbi:securityresult",{detail:{
+     chain:value.chain,address:value.address,creator:value.report.creator,owner:value.report.owner
+   }}));
+ });
  window.addEventListener("yorbi:languagechange",()=>{if(last)render();});
 }
 if(typeof document!=="undefined"){
