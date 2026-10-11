@@ -1,0 +1,40 @@
+name: YORBI Solana Devnet PoW Funding Probe
+
+on:
+  push:
+    branches:
+      - experiment/yorbi-devnet-genesis-20261011
+    paths:
+      - .github/workflows/yorbi-devnet-pow-funding.yml
+
+permissions:
+  contents: read
+
+jobs:
+  pow-funding-only:
+    if: >-
+      github.event.head_commit.message == 'ci: probe PoW funding prerequisites only'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: experiments/solana-devnet
+    steps:
+      - name: Checkout isolated experiment branch
+        uses: actions/checkout@v4
+      - name: Prepare Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Solana SDK
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Syntax-check read-only PoW utilities and funding probe
+        run: |
+          node --check pow-utils.mjs
+          node --check pow-funding.mjs
+      - name: Run isolated PoW safety unit tests (no blockchain writes)
+        run: node --test pow-utils.test.mjs
+      - name: Probe and attempt fee bootstrap then PoW claim (no token mint)
+        env:
+          GITHUB_HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: node pow-funding.mjs

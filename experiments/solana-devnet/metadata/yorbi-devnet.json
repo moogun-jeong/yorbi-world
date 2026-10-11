@@ -1,0 +1,20 @@
+{
+  "name": "YORBI Devnet Trial",
+  "symbol": "YORBI-T",
+  "description": "DEVNET TEST TOKEN ONLY — educational YORBI token. NOT an official YORBI token, NO value, NO sale, NO airdrop.",
+  "image": "https://yorbi-world.arhyme.workers.dev/assets/yorbi-character.webp",
+  "external_url": "https://yorbi-world.arhyme.workers.dev/",
+  "attributes": [
+    {
+      "trait_type": "Network",
+      "value": "Solana Devnet"
+    },
+    {
+      "trait_type": "Status",
+      "value": "Educational trial"
+    }
+  ],
+  "properties": {
+    "category": "image"
+  }
+}

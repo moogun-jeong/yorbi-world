@@ -1,0 +1,32 @@
+name: YORBI PoW Faucet Inventory (read only)
+
+on:
+  push:
+    branches:
+      - experiment/yorbi-devnet-genesis-20261011
+    paths:
+      - .github/workflows/yorbi-devnet-pow-inventory.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    if: >-
+      github.event.head_commit.message == 'ci: scan PoW faucets read only'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: experiments/solana-devnet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned SDK
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Check inventory script
+        run: node --check pow-discover.mjs
+      - name: Verify available PoW faucet source wallets without writing blockchain state
+        run: node pow-discover.mjs
