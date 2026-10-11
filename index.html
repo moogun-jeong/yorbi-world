@@ -276,6 +276,28 @@ section[id]{scroll-margin-top:24px}
 .tracker-graph-link:first-child{border-top:0}
 .tracker-graph-link small{font-size:11px;width:100%;color:#7784a0}
 @media(max-width:680px){.tracker-graph-frame{padding:9px 4px}.tracker-graph-head h4{font-size:19px}.tracker-graph-legend{font-size:10px}}
+
+/* Sprint 6.5: bounded on-device wallet flow report and transparent exports */
+.tracker-report{border-top:1px solid #dfe6f1;padding-top:28px;margin-top:30px}
+.tracker-report-head h4{font-size:22px;margin:9px 0 12px;color:#273453}
+.tracker-report-head p{font-size:12px;line-height:1.8;color:#6a7795}
+.tracker-report-controls{display:flex;gap:13px;align-items:center;flex-wrap:wrap;margin:17px 0}
+.tracker-report-controls label{font-size:12px;font-weight:700;color:#596786}
+.tracker-report-controls select{height:42px;background:#fff;border:1px solid #d3dbec;border-radius:10px;padding:0 14px;color:#313b61;font-size:13px}
+.tracker-report-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tracker-report-card{border:1px solid #e0e7f2;background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;min-width:0}
+.tracker-report-card h5{margin:0 0 13px;font-size:14px;color:#2e3c61}
+.tracker-report-rows{display:flex;flex-direction:column;gap:9px}
+.report-wallet,.report-day{padding:10px 0;border-bottom:1px solid #edf0f6;display:flex;flex-direction:column;gap:4px}
+.report-day{flex-direction:row;justify-content:space-between;gap:10px;align-items:center}
+.report-wallet:last-child,.report-day:last-child{border:0}
+.report-day span,.report-wallet strong{font-size:12px;color:#47577e}
+.report-day strong,.report-wallet span{font-size:12px;color:#697894;line-height:1.65;overflow-wrap:anywhere}
+.tracker-report-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+.tracker-report-action{border:1px solid #d4dcef;border-radius:11px;padding:12px 16px;background:#f3f5ff;color:#4856a4;cursor:pointer;font-size:12px;font-weight:800}
+.tracker-report-action:disabled{opacity:.5;cursor:not-allowed}
+.tracker-report-action:focus-visible,.tracker-report-controls select:focus-visible{outline:3px solid #98a6de;outline-offset:2px}
+@media(max-width:740px){.tracker-report-grid{grid-template-columns:1fr}.tracker-report-actions{flex-direction:column}.tracker-report-action{width:100%}}
 </style>
 </head><body>
 <div class="topnote">✦ GENESIS CHAPTER &nbsp;·&nbsp; <b data-en="NO TOKEN HAS BEEN ISSUED" data-ko="아직 토큰이 발행되지 않았습니다">NO TOKEN HAS BEEN ISSUED</b> &nbsp;·&nbsp; ✦</div>
@@ -425,7 +447,7 @@ section[id]{scroll-margin-top:24px}
     <p class="tracker-disclaimer" data-en="The first 50 ranked holders and up to 50 latest token transfers per watched wallet are only bounded samples; not all history or a 24-hour window. Labeled service wallets are skipped when identifiable, but unlabeled exchange wallets can remain. Only bounded swap evidence is reviewed in Sprint 6.2; exhaustive swaps, realized trading profit, 7702 inner traces, fee escrow claims, gas funding, and multi-hop clusters remain outside coverage. Data source: public Blockscout instance; actual API coverage and browser support vary." data-ko="상위 홀더 50개와 추적 주소당 최근 토큰 전송 최대 50건은 제한된 표본입니다. 전체 기간이나 최근 24시간 집계가 아닙니다. 표시된 서비스 지갑은 제외하지만 미표시 거래소 지갑은 남을 수 있습니다. Sprint 6.2에서 일부 스왑 근거만 제한적으로 조회하며, 전체 매매 내역·실현손익·7702 내부 실행·수수료 에스크로·가스 자금 지원·다단계 연결 지갑은 분석하지 않습니다. 데이터 출처는 Blockscout 공개 인스턴스이며 체인과 브라우저별 접근 가능성은 달라질 수 있습니다.">The first 50 ranked holders and up to 50 latest token transfers per watched wallet are only bounded samples; not all history or a 24-hour window. Labeled service wallets are skipped when identifiable, but unlabeled exchange wallets can remain. Only bounded swap evidence is reviewed in Sprint 6.2; exhaustive swaps, realized trading profit, 7702 inner traces, fee escrow claims, gas funding, and multi-hop clusters remain outside coverage. Data source: public Blockscout instance; actual API coverage and browser support vary.</p>
   <section id="tracker-deep" class="tracker-deep" hidden>
     <div class="tracker-deep-header">
-      <div><span class="scan-small-label" data-en="SPRINT 6.4 · TRANSACTION EVIDENCE" data-ko="스프린트 6.4 · 거래별 온체인 근거">SPRINT 6.4 · TRANSACTION EVIDENCE</span>
+      <div><span class="scan-small-label" data-en="SPRINT 6.5 · TRANSACTION EVIDENCE" data-ko="스프린트 6.5 · 거래별 온체인 근거">SPRINT 6.5 · TRANSACTION EVIDENCE</span>
         <h4 data-en="Swap, router and ETH flow evidence" data-ko="스왑·라우터·ETH 자금 흐름 근거">Swap, router and ETH flow evidence</h4>
         <p data-en="Optional review of up to 6 token-flow transactions, native ETH execution traces for up to 3, and direct or contract-mediated ETH receipts during up to 3 creator-initiated transactions." data-ko="토큰 거래 표본 최대 6건, 그중 ETH 내부 실행 최대 3건과 생성자가 시작한 최근 거래 최대 3건의 직접·컨트랙트 경유 ETH 수령을 조회합니다.">Optional review of up to 6 token-flow transactions and limited ETH execution traces.</p>
       </div>
@@ -449,7 +471,7 @@ section[id]{scroll-margin-top:24px}
 <section id="tracker-graph" class="tracker-graph" hidden aria-label="Evidence-based wallet relationships">
   <div class="tracker-graph-head">
     <div>
-      <span class="scan-small-label" data-en="SPRINT 6.4 · EVIDENCE MAP" data-ko="스프린트 6.4 · 증거 기반 관계도">SPRINT 6.4 · EVIDENCE MAP</span>
+      <span class="scan-small-label" data-en="SPRINT 6.5 · EVIDENCE MAP" data-ko="스프린트 6.5 · 증거 기반 관계도">SPRINT 6.4 · EVIDENCE MAP</span>
       <h4 data-en="Observed wallet transfer map" data-ko="실제로 확인된 지갑 간 자금 이동">Observed wallet transfer map</h4>
       <p data-en="Creator and up to three sampled holders. An arrow requires a source transaction. Shared routers, exchanges or token holders do not create a connection." data-ko="생성자와 상위 홀더 표본 최대 3개를 보여줍니다. 실제 트랜잭션 근거가 있어야 연결선을 그립니다. 같은 라우터·거래소 이용이나 단순 홀더라는 이유로 연결하지 않습니다.">Creator and up to three sampled holders. An arrow requires a source transaction. Shared routers, exchanges or token holders do not create a connection.</p>
     </div>
@@ -469,6 +491,44 @@ section[id]{scroll-margin-top:24px}
     <ul id="tracker-graph-evidence" class="tracker-graph-evidence"></ul>
   </details>
   <p class="tracker-disclaimer" data-en="This is an EVIDENCE MOVEMENT MAP, NOT an ownership or insider clustering chart. The arrows summarize a limited read-only sample, not all funds, hops, or trades. Contract-mediated ETH edges mean a creator-initiated transaction led to a contract-sent receipt, not a direct ETH transfer from the creator. Zero edges is not evidence that no relationships exist." data-ko="이 그래프는 지갑 소유자·내부자 군집 분석이 아니라 실제 자금 이동 근거를 보여줍니다. 화살표는 한정된 조회 표본이며 전체 자금·경유 단계·매매를 뜻하지 않습니다. 계약 경유 ETH 화살표는 생성자가 시작한 거래에서 컨트랙트가 ETH를 보냈다는 의미이지, 생성자의 직접 송금이 아닙니다. 연결선이 0개여도 실제 관련성이 없다는 뜻은 아닙니다.">This is an EVIDENCE MOVEMENT MAP, NOT an ownership or insider clustering chart. The arrows summarize a limited read-only sample, not all funds, hops, or trades. Contract-mediated ETH edges mean a creator-initiated transaction led to a contract-sent receipt, not a direct ETH transfer from the creator. Zero edges is not evidence that no relationships exist.</p>
+</section>
+
+<section id="tracker-report" class="tracker-report" hidden aria-label="Bounded token-flow activity report">
+  <div class="tracker-report-head">
+    <span class="scan-small-label" data-en="SPRINT 6.5 · SAMPLED ACTIVITY REPORT" data-ko="스프린트 6.5 · 지갑 활동 표본 보고서">SPRINT 6.5 · SAMPLED ACTIVITY REPORT</span>
+    <h4 data-en="Wallet activity by time window" data-ko="기간별 지갑 활동 요약">Wallet activity by time window</h4>
+    <p data-en="Review observed wallet token transfers by UTC period. Reports include only Blockscout records already fetched in this browser, not every on-chain transaction." data-ko="이미 브라우저에서 조회한 Blockscout 토큰 이동 기록을 UTC 기준 기간별로 정리합니다. 모든 온체인 거래를 조회하는 것은 아닙니다.">Review observed wallet token transfers by UTC period. Reports include only Blockscout records already fetched in this browser, not every on-chain transaction.</p>
+  </div>
+  <div class="tracker-report-controls">
+    <label for="report-period" data-en="Time window (observed sample)" data-ko="조회 기간 (관찰된 표본 기준)">Time window (observed sample)</label>
+    <select id="report-period">
+      <option value="24h" data-en="Last 24 hours" data-ko="최근 24시간">Last 24 hours</option>
+      <option value="7d" selected data-en="Last 7 days" data-ko="최근 7일">Last 7 days</option>
+      <option value="sample" data-en="All fetched sample" data-ko="조회한 표본 전체">All fetched sample</option>
+    </select>
+  </div>
+  <p id="report-overview" class="tracker-scope" role="status"></p>
+  <div class="tracker-report-grid">
+    <div class="tracker-report-card">
+      <h5 data-en="Observed UTC days" data-ko="조회 표본의 UTC 일자별 이동">Observed UTC days</h5>
+      <div id="report-daily" class="tracker-report-rows"></div>
+    </div>
+    <div class="tracker-report-card">
+      <h5 data-en="Token flows by watched address" data-ko="추적 지갑별 토큰 유입·유출">Token flows by watched address</h5>
+      <div id="report-wallets" class="tracker-report-rows"></div>
+    </div>
+  </div>
+  <div class="tracker-report-card">
+    <h5 data-en="Trade-evidence classifications (optional deep scan)" data-ko="거래 근거 분류 (심층 분석 실행 시)">Trade-evidence classifications (optional deep scan)</h5>
+    <div id="report-verdicts" class="tracker-report-rows"></div>
+    <p class="tracker-mini" data-en="These classification counts come from at most six separately inspected transactions and are not period-filtered, lifetime buys or profits. Stronger swap evidence does not prove market PnL or beneficial owner." data-ko="분류 건수는 별도로 조회한 거래 최대 6건 기준이며, 위 기간 필터와는 별개입니다. 전체 매수·매도 횟수나 수익이 아니고, 스왑 근거가 있어도 실현 손익·실소유자는 확인되지 않습니다.">These classification counts come from at most six separately inspected transactions and are not period-filtered, lifetime buys or profits. Stronger swap evidence does not prove market PnL or beneficial owner.</p>
+  </div>
+  <div class="tracker-report-actions">
+    <button type="button" id="report-save" class="tracker-report-action" disabled data-en="Download sample JSON ↓" data-ko="표본 JSON 저장 ↓">Download sample JSON ↓</button>
+    <button type="button" id="report-copy" class="tracker-report-action" disabled data-en="Copy text summary" data-ko="텍스트 요약 복사">Copy text summary</button>
+  </div>
+  <p id="report-status" class="tracker-mini" role="status" aria-live="polite"></p>
+  <p class="tracker-disclaimer" data-en="The browser does not automatically store or publish this report. Exported JSON contains public token contract, wallet addresses and source transaction hashes: review before sharing. Time ranges filter ALREADY-FETCHED transfers (up to 50 records per wallet, first Blockscout page); 0 events is not proof of no trading. No balance history, profit estimation, ownership clustering, CEX trades or full token lifetime audit is provided." data-ko="브라우저가 이 보고서를 자동 저장·공개하지 않습니다. 내려받은 JSON에는 공개 컨트랙트·지갑 주소·거래 해시가 포함되므로 공유 전에 내용을 확인하세요. 기간 필터는 이미 가져온 지갑별 첫 페이지 최대 50건에만 적용됩니다. 0건도 실제 거래가 없다는 의미는 아닙니다. 잔고 변동 이력·실현손익·실소유자 군집·CEX 매매·전체 발행 이후 감사는 제공하지 않습니다.">The browser does not automatically store or publish this report. Exported JSON contains public token contract, wallet addresses and source transaction hashes: review before sharing. Time ranges filter ALREADY-FETCHED transfers (up to 50 records per wallet, first Blockscout page); 0 events is not proof of no trading.</p>
 </section>
   </div>
 </section>
@@ -572,7 +632,8 @@ section[id]{scroll-margin-top:24px}
 </script>
 <script type="module" src="assets/explorer.mjs"></script>
 <script type="module" src="assets/security.mjs"></script>
-<script type="module" src="assets/wallet-radar.mjs?v=s64-20261011"></script>
-<script type="module" src="assets/wallet-evidence.mjs?v=s64-20261011"></script>
-<script type="module" src="assets/wallet-graph.mjs?v=s64-20261011"></script>
+<script type="module" src="assets/wallet-radar.mjs?v=s65-20261011"></script>
+<script type="module" src="assets/wallet-evidence.mjs?v=s65-20261011"></script>
+<script type="module" src="assets/wallet-graph.mjs?v=s65-20261011"></script>
+<script type="module" src="assets/wallet-report.mjs?v=s65-20261011"></script>
 </body></html>

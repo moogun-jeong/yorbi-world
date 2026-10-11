@@ -284,7 +284,17 @@ function initTracker(){
     }
     window.dispatchEvent(new CustomEvent("yorbi:walletsample",{detail:{
        chain,token:address,creator:creatorAddress,
-       holders:holderList.selected.map(w=>w.address),tokenLinks:linked,samples:sources.slice(0,8)
+       holders:holderList.selected.map(w=>w.address),tokenLinks:linked,samples:sources.slice(0,8),
+       walletRecords:transfers.filter(x=>!x.error&&Array.isArray(x.raw)).map(x=>({
+         address:x.address,more:x.summary?.partial===true,
+         records:x.raw.slice(0,50).map(item=>({
+           from:{hash:item.from?.hash},to:{hash:item.to?.hash},
+           token:{address_hash:item.token?.address_hash,decimals:item.token?.decimals},
+           total:{value:item.total?.value,decimals:item.total?.decimals},
+           transaction_hash:item.transaction_hash,timestamp:item.timestamp,
+           log_index:item.log_index??item.index??null
+         }))
+       }))
     }}));
   }catch(err){
     if(job!==version)return;

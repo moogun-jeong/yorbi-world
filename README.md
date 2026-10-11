@@ -258,6 +258,36 @@ node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.t
 Mobile smoke test: select PEPE on Ethereum, run Wallet Radar, then the optional deep transaction review. The "Observed wallet transfer map" shows the creator and sampled holder nodes; source arrows appear only when a direct ERC-20/ETH move or verified creator-initiated mediated ETH receipt was encountered. Inspect each linked hash on Blockscout. Verify that a zero-arrow PEPE graph does not imply unrelated wallets. Repeat with Base. Switch English/Korean. Start another token scan before a long deep review finishes and confirm the old results do not appear. Compare elapsed times cautiously with prior builds, since provider response time, rate limits and sampled transactions vary.
 
 
+## Sprint 6.5 — sampled wallet timeline and portable reports (2026-10-11)
+
+**Status:** Read-only, browser-only, zero extra data API calls beyond the existing Wallet Radar and optional deep scan. Ethereum and Base supported. **No GitHub Actions**, no service subscriptions, no persistent backend, no wallet connection or on-chain execution.
+
+### Time-window summaries
+- Receive the **already-fetched first-page ERC-20 transfer logs** for each observed wallet (maximum 50 records per wallet). Preserve source tx hashes, exact token matching, transfer direction, UTC timestamps and token quantity where parseable.
+- Add a period selector for **last 24 hours / last 7 days / entire fetched sample**, measured against the timestamp at which Wallet Radar returned its sample. This filters the **limited fetched sample**, **not the chain's complete period history**. Never interpret "0 sampled events" as "0 market buys/sells."
+- Group the matching transfer events by **UTC calendar date** and watched wallet. Display incoming/outgoing counts and approximate transferred token quantities, with invalid values explicitly counted as *unknown* rather than zero. Do not call transfers actual purchases or sales.
+- After separate user-triggered deep evidence analysis, show **per-wallet counts of classifications already made by the previous Sprint** (explicit swap method + payment flow + initiating wallet, contextual swap, generic token transfer, unknown). These classifications are **not** filtered by the transfer timeline selector; the panel explicitly explains this. No additional DEX protocols or market transactions are magically authenticated by the report.
+
+### Export and sharing
+- A **Download sample JSON** button produces a portable, versioned `yorbi-wallet-sample-v1` file with chain/contract, reported creator if any, generated UTC time, time-window, sample limitations, grouped movement records, original Blockscout tx citations, bounded classification evidence and graph edges.
+- A **Copy text summary** button copies a concise EN/KO summary for sharing. It does **not** generate a public link, upload a dataset or place wallets in a remote database.
+- The browser does not automatically persist results. Export is an explicit user action; copied/shared records contain publicly visible wallet addresses and contract details. Visitors should inspect downloaded JSON before publishing.
+- Updating the analyzed chain or token clears previous report state and evidence. Evidence/graph updates must match both chain and token contract to avoid stale classifications leaking between scans.
+
+### Caveats
+- No full-blockchain transfer traversal, wallet balance snapshots, trading profit estimates, realized sell receipts, linked-beneficial-owner identification, net exposure reconciliation or CEX order history is attempted. Any transaction snapshots are limited to the already fetched first pages (up to 50 ERC-20 movements per wallet) and the deep sample (up to six selected transactions).
+- Free Blockscout API rate limits remain; new timeline and export features require **no extra network calls** on period change, report creation, copying or download.
+- Automatic claims such as "developer sold 70%" remain prohibited unless separately decoded from complete, verified transaction evidence. No financial trade execution is implemented.
+
+### Tests
+
+```bash
+node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs tests/wallet-graph.test.mjs tests/wallet-report.test.mjs
+```
+
+Mobile acceptance: scan PEPE (Ethereum), run Wallet Radar, inspect the 24h/7d/sample time selector; inspect selected UTC dates and individual wallet inflows/outflows. Optionally run deep trade-evidence review and check the classified evidence counts. Download a JSON report and verify time/source addresses with public Blockscout transactions, copy the EN/KO text report and ensure browser does not automatically publish or store results. Re-scan a Base token and verify old evidence does not appear. Confirm source URL allowlist and no extra requests for period toggles. Device browser file download and clipboard success are **not established by static/unit tests**.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

@@ -462,7 +462,8 @@ function initDeep(){
      stats:{requests,elapsed:Date.now()-started,parallel:Math.min(2,jobs.length)}};
    render();
    window.dispatchEvent(new CustomEvent("yorbi:deepsample",{detail:{
-    chain,creator,direct:funding?.items||[],via:innerFunding?.hits||[]
+    chain,token,creator,direct:funding?.items||[],via:innerFunding?.hits||[],
+    events:output.events.map(x=>({wallet:x.wallet,hash:x.hash,verdict:x.verdict}))
    }}));
   }catch(_){
    if(live())msg(labels("Limited evidence lookup failed. Results cannot be classified.",

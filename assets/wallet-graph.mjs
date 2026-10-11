@@ -147,18 +147,27 @@ function setup(){
    a.href=e.url;a.target="_blank";a.rel="noopener noreferrer";row.append(a);list.append(row);
   }
   wrap.hidden=false;
+  window.dispatchEvent(new CustomEvent("yorbi:graphsample",{detail:{
+    chain:first.chain,token:first.token,graph
+  }}));
  };
  window.addEventListener("yorbi:scanstart",()=>{
   first=null;deep=null;wrap.hidden=true;list.replaceChildren();svg.replaceChildren();
  });
  window.addEventListener("yorbi:walletsample",e=>{
-  const d=e.detail||{};first={chain:d.chain,creator:d.creator,holders:d.holders,tokenLinks:d.tokenLinks};
+  const d=e.detail||{};first={chain:d.chain,token:d.token,creator:d.creator,holders:d.holders,tokenLinks:d.tokenLinks};
   deep=null;render();
  });
  window.addEventListener("yorbi:deepsample",e=>{
   const d=e.detail||{};
-  if(!first||first.chain!==d.chain||low(first.creator)!==low(d.creator))return;
+  if(!first||first.chain!==d.chain||low(first.creator)!==low(d.creator)||low(first.token)!==low(d.token))return;
   deep={nativeDirect:d.direct,nativeVia:d.via};render();
+ });
+ window.addEventListener("yorbi:graphrequest",()=>{
+  if(!first)return;
+  window.dispatchEvent(new CustomEvent("yorbi:graphsample",{detail:{
+   chain:first.chain,token:first.token,graph:walletGraph({...first,...deep})
+  }}));
  });
  window.addEventListener("yorbi:languagechange",()=>{if(first)render();});
 }
