@@ -1,0 +1,35 @@
+name: YORBI Devnet One-Time Genesis
+
+on:
+  push:
+    branches:
+      - experiment/yorbi-devnet-genesis-20261011
+    paths:
+      - .github/workflows/yorbi-devnet-genesis-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  issue-once:
+    if: github.event.head_commit.message == 'ci: arm YORBI one-time Devnet genesis'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: experiments/solana-devnet
+    steps:
+      - name: Checkout safe experiment branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Solana SDK (no lifecycle scripts)
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Syntax-check Devnet-only script
+        run: npm run check
+      - name: Execute one-off disposable Devnet issuance to Phantom PUBLIC address
+        env:
+          GITHUB_HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: npm run genesis
