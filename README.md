@@ -7,6 +7,20 @@ Official early-stage character website for **YORBI**, an original fictional digi
 ## Official channel
 - X: [@MeetYorbiAI](https://x.com/MeetYorbiAI)
 
+## Next project priority — YORBI Token Genesis & Long-Term Operations
+
+Website feature/UI enhancements are **not the current development priority**.
+The immediate focus is to design and assess YORBI token issuance, release
+security and operational controls, first-90-day stewardship, transparent
+treasury/liquidity disclosures, and sustainable X/community development.
+
+- [Token genesis and operations working roadmap](docs/YORBI-TOKEN-ROADMAP.md)
+- [First 15 Genesis posts and X/community operations queue](docs/YORBI-X-CONTENT-PLAN.md)
+
+Both are **draft plans, not public launch announcements or approved token terms**.
+YORBI remains **PRE-TOKEN / NOT ISSUED**. This repo's existing website is
+operational branding and a public information surface, not a deployed token.
+
 ## Current version
 
 This is a **free, bilingual (English/Korean), static website**. It contains the YORBI origin story, YORBI Daily editorial notes, a working read-only Explorer beta, the evolution roadmap, and the project transparency notice.
