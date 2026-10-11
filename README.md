@@ -345,6 +345,31 @@ Tests: `node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet
 **Mobile verification:** Look up Ethereum PEPE; see liquidity, GoPlus flags/holder share, LP unknown, creator unscanned. Click Wallet Radar and then deep inspect; ensure creator outgoing transfers do not turn into sales without actual creator-address swap evidence. Follow source links, switch KO/EN, reload saved snapshot, and scan another token to confirm stale results are cleared. The on-device UI sequence remains to be validated by a real browser and is not established by pure logic unit tests.
 
 
+## Sprint 6.8 — Moonshot growth observations and CEX listing-path transparency (2026-10-11)
+
+**Status:** Read-only browser feature; zero additional market-provider API calls, zero GitHub Actions, no server-side history/paid service, no AI trading recommendation.
+
+### Observable Moonshot metrics
+- For a **user-triggered fresh Explorer token lookup**, take a source-scoped snapshot of the **selected highest-displayed-liquidity DEX pool** with chain+exact contract, lookup timestamp, market cap (when separately reported), FDV, selected-pair USD liquidity, **rolling** 24h pool trading volume, 24h buy/sell transaction counts, price, 24h price change and pool creation date.
+- When a matching GoPlus Safety Scan result arrives for **the same chain and exact token** within 15 minutes, append its **reported holder count** to the same observation. Holder count is optional, not backfilled or assumed zero if GoPlus is missing. The history graph only uses valid, timestamped numbers.
+- Browser `localStorage` key `yorbi:moonshot-snapshots:v1` retains up to **30 days**, max **48 observations per token** and **240 total**. Two snapshots less than five minutes apart for the same token are coalesced; percentage comparisons require an earlier observation at least **15 minutes** old. No fabricated 24-hour/7-day growth rate: display the **actual elapsed time between observed scans**, not a standard period.
+- A separate 12-hour recent-result recovery feature remains in place. **Restoring cached results does NOT create a new growth observation.** A clear-history control only removes the selected token's local growth series; the separate clear-results control maintains its original behavior. Private/incognito storage may not survive tab closure.
+- Market cap is **never silently replaced by FDV**; missing values remain unknown; zero-denominator growth has a computable absolute difference but **no percentage**. If the DEX source's selected pair changed across scans, **pair liquidity and rolling volume are NOT compared across the different pools**. Selected pool age is labeled as pool age, **not token launch age**.
+- Simple browser SVG lines visualize only recorded market-cap and holder-count observations. No historical price/cap/provider chart data is fabricated for intervals that have not been recorded. Changing the language or rendering the previous report does not call any provider API.
+
+### Listing-path status / limitations
+- Display a conceptual path **DEX pair → small CEX → mid-size CEX → large/Tier-1 CEX → Binance/Coinbase**.
+- The selected DEX pair is directly observed in the DEX Screener response, but **DEX-only status is NOT verified**. CEX market coverage is **not checked by any provider**, so **every CEX stage remains unknown**, not "not listed" or "upcoming." There are NO invented listing dates, probabilities, relationships, guaranteed routes or implied Binance/Coinbase listing.
+- Future versions can introduce **exchange-specific source-backed market checks** after separately verifying API coverage and token/chain identity. Until then, this is a transparent roadmap of evidence gaps and does not estimate Remaining Upside or investment attractiveness.
+- Thin liquidity and risk signals remain available independently in Sprint 6.7; this feature adds **no composite scam score, automated watch, profit target or buy/sell execution**.
+- Public DEX Screener/GoPlus data can be stale, reported incorrectly or rate-limited; locally stored samples may be missing when a device clears browser data.
+
+### Tests and acceptance
+`node --test tests/explorer.test.mjs tests/security.test.mjs tests/wallet-radar.test.mjs tests/wallet-evidence.test.mjs tests/wallet-graph.test.mjs tests/wallet-report.test.mjs tests/scan-restore.test.mjs tests/wallet-execution.test.mjs tests/risk-synthesis.test.mjs tests/moonshot-growth.test.mjs`
+
+On iPhone: (1) fresh PEPE scan displays one local observation and **no growth percent**, (2) GoPlus holder count appears only when provided, (3) re-scan at least 15 minutes later to produce an observed-time change, (4) test saved-snapshot reload does NOT invent additional growth observations, (5) inspect explicit "DEX-only unverified"/all CEX statuses unknown, and (6) clear this token's growth history and confirm it does not affect other token records. Verify English/Korean. Static/unit tests cannot prove iOS browser localStorage persists across different apps or isolated in-app browser containers.
+
+
 ## Development priorities
 1. Ship and test Genesis page with zero recurring cost.
 2. Publish honest character content and keep roadmap statuses accurate.

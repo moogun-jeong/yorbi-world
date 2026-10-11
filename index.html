@@ -322,6 +322,34 @@ section[id]{scroll-margin-top:24px}
 .risk-evidence-meta{color:#7b89a3;font-size:11px;line-height:1.45}
 .risk-evidence-link{font-size:11px;color:#5968b2;text-decoration:underline;text-underline-offset:3px;align-self:flex-start}
 @media(max-width:680px){.risk-evidence{grid-template-columns:1fr}.risk-heading h3{font-size:19px}.risk-evidence-row{padding:13px}}
+
+/* Sprint 6.8: local growth snapshots, evidence-grade CEX listing path */
+.growth-panel{margin-top:27px;padding-top:27px;border-top:1px solid #dce4f1}
+.growth-heading h3{margin:8px 0 10px;font-size:21px;color:#2d385d}
+.growth-heading p,.growth-listing-head p{color:#687895;font-size:12px;line-height:1.75;margin:4px 0 16px}
+.growth-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:17px 0 14px}
+.growth-metric{border:1px solid #e0e6f3;border-radius:12px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:7px}
+.growth-metric small{font-size:11px;line-height:1.5;color:#7381a0}
+.growth-metric strong{font-size:19px;line-height:1.4;color:#2b3b63;overflow-wrap:anywhere}
+.growth-metric .growth-delta{font-size:10px;color:#6b7c9c;line-height:1.5}
+.growth-history{font-size:11px;color:#7886a1;line-height:1.7;margin:12px 0}
+.growth-visuals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:14px}
+.growth-visuals>div{border:1px solid #e0e6f3;border-radius:12px;padding:12px;min-width:0}
+.growth-visuals h4,.growth-listing-head h4{font-size:13px;color:#3b4a6d;margin:4px 0 11px}
+.growth-chart svg{display:block;width:100%;height:auto;max-height:85px;color:#6375b7}
+.growth-muted{color:#8490a8;font-size:11px;line-height:1.65}
+.growth-listing-head{margin-top:26px}
+.growth-listing{list-style:none;padding:0;margin:0;display:grid;gap:9px}
+.growth-stage{border:1px solid #e1e7f2;border-radius:11px;padding:11px 14px;display:grid;grid-template-columns:90px 1fr;column-gap:10px;row-gap:4px;align-items:center}
+.growth-stage-status{font-size:10px;color:#7a86a0;grid-row:1 / span 2;border:1px solid #d9e0ec;padding:5px 7px;border-radius:8px;text-align:center}
+.growth-stage-status.growth-observed{color:#5c7196;border-color:#b9cadd}
+.growth-stage strong{font-size:12px;color:#3d4e73}
+.growth-stage small{font-size:10px;color:#75829b;line-height:1.6}
+.growth-foot{margin-top:17px}
+.growth-foot p{color:#7885a0;font-size:11px;line-height:1.75}
+.growth-clear{border:1px solid #d6ddea;background:transparent;border-radius:10px;padding:10px 13px;font-size:11px;color:#626f96;cursor:pointer}
+.growth-clear:focus-visible{outline:3px solid #a0b0da;outline-offset:2px}
+@media(max-width:720px){.growth-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.growth-visuals{grid-template-columns:1fr}.growth-metric strong{font-size:16px}.growth-stage{grid-template-columns:82px 1fr}}
 </style>
 </head><body>
 <div class="topnote">✦ GENESIS CHAPTER &nbsp;·&nbsp; <b data-en="NO TOKEN HAS BEEN ISSUED" data-ko="아직 토큰이 발행되지 않았습니다">NO TOKEN HAS BEEN ISSUED</b> &nbsp;·&nbsp; ✦</div>
@@ -406,7 +434,37 @@ section[id]{scroll-margin-top:24px}
      <div class="scan-insight"><span aria-hidden="true">✧</span><p id="scan-interpretation"></p></div>
      <div class="scan-bottom"><span class="scan-timestamp"><span data-en="Requested at" data-ko="조회 시각">Requested at</span>: <time id="scan-checked"></time></span><a id="scan-source" target="_blank" rel="noopener noreferrer" href="https://dexscreener.com/" hidden data-en="Verify on DEX Screener ↗" data-ko="DEX Screener에서 검증 ↗">Verify on DEX Screener ↗</a></div>
    </div>
-   <section id="risk-synthesis" class="risk-synthesis" hidden aria-label="Integrated evidence and risk context">
+   
+<section id="growth-panel" class="growth-panel" hidden aria-label="Moonshot growth observations">
+  <div class="growth-heading">
+    <span class="scan-small-label" data-en="SPRINT 6.8 · MOONSHOT GROWTH" data-ko="스프린트 6.8 · 문샷 성장 추적">SPRINT 6.8 · MOONSHOT GROWTH</span>
+    <h3 data-en="Growth observations & listing path" data-ko="성장 지표 관찰·상장 경로">Growth observations & listing path</h3>
+    <p data-en="Compare verified snapshots taken when you scan this token. No past prices or holder counts are invented. The observations are stored on this device, not monitored in the background." data-ko="실제 이 토큰을 조회한 시점의 기록끼리 비교합니다. 과거 가격이나 홀더 수를 임의로 채우지 않습니다. 기록은 이 기기에 저장되며 백그라운드 자동 모니터링은 하지 않습니다.">Compare verified snapshots taken when you scan this token.</p>
+  </div>
+  <div id="growth-metrics" class="growth-metrics"></div>
+  <p id="growth-history" class="growth-history"></p>
+  <div class="growth-visuals">
+    <div>
+      <h4 data-en="Observed market cap history" data-ko="관찰된 시가총액 변화">Observed market cap history</h4>
+      <div id="growth-chart" class="growth-chart"></div>
+    </div>
+    <div>
+      <h4 data-en="Observed holder-count history" data-ko="관찰된 홀더 수 변화">Observed holder-count history</h4>
+      <div id="growth-holders-chart" class="growth-chart"></div>
+    </div>
+  </div>
+  <div class="growth-listing-head">
+    <h4 data-en="CEX listing path — verification status" data-ko="CEX 상장 단계 — 확인 상태">CEX listing path — verification status</h4>
+    <p data-en="A DEX pair is observed. This tool has NOT checked centralized-exchange markets, so neither DEX-only status nor any future listing can be claimed." data-ko="DEX 거래쌍은 확인됐지만 중앙화 거래소의 실제 상장 마켓을 조회하지 않았습니다. 따라서 DEX-only 여부나 향후 상장을 확정할 수 없습니다.">A DEX pair is observed. Centralized exchange listings are not checked.</p>
+  </div>
+  <ol id="growth-listing" class="growth-listing"></ol>
+  <div class="growth-foot">
+    <p data-en="Market cap and FDV are different metrics. Rolling 24h volume is not cumulative trading activity. Liquidity is the selected pool, not guaranteed exit capacity. Holder counts come from GoPlus when reported. A change between scans is NOT a standardized 24h or 7d growth rate." data-ko="시가총액과 FDV는 다른 지표입니다. 24시간 거래량은 누적 거래량이 아니고, 유동성은 선택된 풀의 표시 수치일 뿐 실제 매도 가능 규모가 아닙니다. 홀더 수는 GoPlus 제공값 기준입니다. 조회 시점 간 변화율은 표준 24시간·7일 성장률이 아닙니다.">Market cap and FDV are different. Changes between scans are not standardized 24h or 7d growth rates.</p>
+    <button type="button" id="growth-clear" class="growth-clear" data-en="Clear this token's local growth history" data-ko="이 토큰 성장 기록 지우기">Clear this token's local growth history</button>
+    <p id="growth-status" role="status" aria-live="polite" class="growth-status"></p>
+  </div>
+</section>
+<section id="risk-synthesis" class="risk-synthesis" hidden aria-label="Integrated evidence and risk context">
   <div class="risk-heading">
     <span class="scan-small-label" data-en="SPRINT 6.7 · COMBINED EVIDENCE" data-ko="스프린트 6.7 · 근거 통합 점검">SPRINT 6.7 · COMBINED EVIDENCE</span>
     <h3 data-en="Integrated risk & evidence review" data-ko="위험 신호·온체인 근거 통합 점검">Integrated risk & evidence review</h3>
@@ -679,5 +737,6 @@ section[id]{scroll-margin-top:24px}
 <script type="module" src="assets/wallet-graph.mjs?v=s65-20261011"></script>
 <script type="module" src="assets/wallet-report.mjs?v=restore-20261011"></script>
 <script type="module" src="assets/risk-synthesis.mjs?v=s67-20261011"></script>
+<script type="module" src="assets/moonshot-growth.mjs?v=s68-20261011"></script>
 <script type="module" src="assets/scan-restore.mjs?v=restore-20261011"></script>
 </body></html>
