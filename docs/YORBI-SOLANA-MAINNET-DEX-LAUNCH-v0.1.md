@@ -5,6 +5,8 @@
 > This is a technical and economic design proposal, not a token offering, launch announcement or permission to transact.
 > Official YORBI token: **PRE-TOKEN, NOT ISSUED**. Solana Devnet educational mint YORBI-T is separate.
 
+> **Technical standard follow-up (2026-10-11):** See [YORBI Token Tech Spec v0.2](YORBI-TOKEN-TECH-SPEC-v0.2-PROPOSED.md) and [ADR-0001](ADR-0001-YORBI-TOKEN-PROGRAM.md). The preferred architecture is now **original SPL Token + Metaplex metadata + Raydium CPMM**, subject to approval and a new classic-SPL Devnet equivalence test; the previously tested Token-2022 remains an alternative. The 100m supply and allocations are still illustrative, not approved.
+
 ## 1. Evidence and project boundaries
 
 - Official GitHub: https://github.com/moogun-jeong/yorbi-world
@@ -21,7 +23,7 @@
 | Mainnet | Solana mainnet-beta | Proposed |
 | Token name | YORBI | Proposed (name conflict / IP review needed) |
 | Ticker | YORBI | Proposed (symbol conflict check needed) |
-| Token program | Solana Token-2022 with ONLY MetadataPointer + TokenMetadata if confirmed compatible across Phantom, Raydium and major explorers; fallback standard SPL Token + Metaplex metadata | **TBD** |
+| Token program | **Preferred after technical review:** Original SPL Token Program + Metaplex Fungible Metadata; **alternate:** Token-2022 limited to MetadataPointer + TokenMetadata after evidence-based compatibility checks | **PROPOSED / NOT APPROVED**; see tech spec v0.2 + ADR-0001 |
 | Decimal precision | 6 | Proposed, matches Devnet trial |
 | Total supply | 100,000,000 tokens, fixed at launch | **ILLUSTRATION, NOT APPROVED** |
 | Mint Authority | Mint the fully approved allocation into separately controlled, documented accounts, independently verify, then irreversible revoke; pause if any mismatch | Proposed |
@@ -34,7 +36,7 @@
 | LP ownership | Transparent multi-approval treasury and published custody, time lock/Burn & Earn only after risk review | TBD |
 | Sale/presale/airdrop/price promises | No sale, presale, distribution campaign or promised return approved | Prohibited until separately authorized |
 
-**Token-2022 compatibility:** Raydium CPMM allows a vetted extension list including MetadataPointer and TokenMetadata; do not assume arbitrary extensions are safe. Before picking Token-2022 for mainnet, test YORBI-T-style token UI, swaps and routing in supported non-mainnet simulation. Raydium's older AMM v4 is SPL-Token-only.
+**Token-program compatibility:** Raydium CPMM supports both classic SPL and vetted Token-2022 extensions (including MetadataPointer/TokenMetadata). Do not assume arbitrary extensions are safe. New proposed classic SPL + Metaplex path must be tested on Devnet before its use on mainnet; Token-2022 YORBI-T Devnet success does not validate a classic SPL implementation. Raydium AMM v4 accepts only classic SPL, but CPMM remains the default recommendation.
 
 ## 3. Tokenomics v0.1 example — 100 million YORBI (not a decision)
 
